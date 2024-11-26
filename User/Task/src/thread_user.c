@@ -306,18 +306,18 @@ void PathWrite_task(void *pvParameters)
 //    My_mDelay(500);
 //    RobotArm_WaitStop();
 //    My_mDelay(1500);
-    ChassisCoord_Set(0, 1000, 0);
+    ChassisCoord_Set(0, 10, 0);
     ChassisCoord_WaitStop();
-    My_mDelay(2000);
-    ChassisCoord_Set(0, -1000, 0);
+    My_mDelay(200);
+    ChassisCoord_Set(0, -10, 0);
     ChassisCoord_WaitStop();
-    My_mDelay(2000);
-    ChassisCoord_Set(0, 1000, 0);
+    My_mDelay(200);
+    ChassisCoord_Set(0, 10, 0);
     ChassisCoord_WaitStop();
-    My_mDelay(2000);
-    ChassisCoord_Set(0, -1000, 0);
+    My_mDelay(200);
+    ChassisCoord_Set(0, -10, 0);
     ChassisCoord_WaitStop();
-    My_mDelay(2000);
+    My_mDelay(200);
     Debug_Await();
   }
 #endif

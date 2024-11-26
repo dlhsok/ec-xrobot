@@ -59,8 +59,8 @@ RobotArmData_Typedef RobotArmData_Struct =
   .MotorAngle_Target[2] = 134,
   /***********机械臂坐标系***********/
   .SCARA_Cartesian[0] = 0.0f,
-  .SCARA_Cartesian[1] = -316.7f,
-  .SCARA_Cartesian[2] = 220.0f,
+  .SCARA_Cartesian[1] = 40.0f,
+  .SCARA_Cartesian[2] = 0.0f,
 };
 /*******识别模块数据声明*******/
 RecognitionModule_s RecognitionModule_t;
