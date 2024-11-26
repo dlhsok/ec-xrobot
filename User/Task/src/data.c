@@ -54,13 +54,13 @@ RobotArmData_Typedef RobotArmData_Struct =
   .ServoTime       = {20, 20, 20},
   .ID              = DEVICE_ROBOTARM_ID,
   .SCARAflg_U.WORD = 0,
-  .MotorAngle_Target[0] = 18,
-  .MotorAngle_Target[1] = 95,
-  .MotorAngle_Target[2] = 134,
+  .MotorAngle_Target[0] = 0,
+  .MotorAngle_Target[1] = 40,
+  .MotorAngle_Target[2] = 0,
   /***********机械臂坐标系***********/
   .SCARA_Cartesian[0] = 0.0f,
-  .SCARA_Cartesian[1] = 40.0f,
-  .SCARA_Cartesian[2] = 0.0f,
+  .SCARA_Cartesian[1] = -316.7f,
+  .SCARA_Cartesian[2] = 220.0f,
 };
 /*******识别模块数据声明*******/
 RecognitionModule_s RecognitionModule_t;
