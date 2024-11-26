@@ -56,7 +56,7 @@ RobotArmData_Typedef RobotArmData_Struct =
   .SCARAflg_U.WORD = 0,
   .MotorAngle_Target[0] = 0,
   .MotorAngle_Target[1] = 40,
-  .MotorAngle_Target[2] = 0,
+  .MotorAngle_Target[2] = -84.5f,
   /***********»úÐµ±Û×ø±êÏµ***********/
   .SCARA_Cartesian[0] = 0.0f,
   .SCARA_Cartesian[1] = -316.7f,

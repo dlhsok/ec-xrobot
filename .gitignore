@@ -23,3 +23,4 @@ JLinkLog.txt
 *.sct
 *.map
 *.hex
+*.orig
