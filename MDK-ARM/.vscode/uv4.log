@@ -1,0 +1,19 @@
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'E:\Keil5\ARM\ARMCC\Bin'
+Build target 'STM32F407VET6'
+compiling thread_user.c...
+..\User\Task\src\thread_user.c(780): warning:  #940-D: missing return statement at end of non-void function "Avoid_Obstacle" 
+  }
+..\User\Task\src\thread_user.c(789): warning:  #223-D: function "LineTracker_CorrectiveCtrl" declared implicitly
+  			LineTracker_CorrectiveCtrl(0);
+..\User\Task\src\thread_user.c(861): warning:  #940-D: missing return statement at end of non-void function "Find_Obstacle" 
+  }
+..\User\Task\src\thread_user.c(83): warning:  #177-D: function "Recognition_Start"  was declared but never referenced
+  static void Recognition_Start(void)
+..\User\Task\src\thread_user.c(105): warning:  #177-D: function "Rotation_Claw"  was declared but never referenced
+  static void Rotation_Claw(int16_t _angle_x10)
+..\User\Task\src\thread_user.c: 5 warnings, 0 errors
+linking...
+Program Size: Code=57222 RO-data=7374 RW-data=596 ZI-data=9380  
+FromELF: creating hex file...
+"STM32F407VET6\STM32F407VET6.axf" - 0 Error(s), 5 Warning(s).
+Build Time Elapsed:  00:00:14
