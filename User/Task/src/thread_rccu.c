@@ -402,9 +402,9 @@ void ChassisCoord_Set(float _x_diff, float _y_diff, float _yaw_diff)
 }
 void ChassisCoord_WaitStop(void)
 {
-  while( ( rccu_struct.ChassisCoord_CtrlStruct.soft_y != rccu_struct.ChassisCoord_CtrlStruct.goal_y ) || \
+  while( ( ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_y - rccu_struct.ChassisCoord_CtrlStruct.goal_y) > 1.0f ) || \
          ( ABS(rccu_struct.LocationY_pid.err[NOW]) > 10 ) || \
-         ( rccu_struct.ChassisCoord_CtrlStruct.soft_x != rccu_struct.ChassisCoord_CtrlStruct.goal_x ) || \
+         ( ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_x - rccu_struct.ChassisCoord_CtrlStruct.goal_x) > 1.0f ) || \
          ( ABS(rccu_struct.LocationX_pid.err[NOW]) > 10 ) || \
          ( ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_yaw - rccu_struct.ChassisCoord_CtrlStruct.goal_yaw) > 0.5f) || \
          ( ABS(rccu_struct.YawAngle_pid.err[NOW]) > 0.2f ) )
