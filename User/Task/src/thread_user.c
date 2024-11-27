@@ -275,6 +275,7 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
 /* Exported functions --------------------------------------------------------*/
 uint8_t time_cnt = 0, Line_Count = 0;;
 uint8_t Line_ScanNum = 0;
+int stack_free, stack_percentage;
 void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
@@ -295,7 +296,12 @@ void PathWrite_task(void *pvParameters)
   while(1)
   {
 
-//    RobotArmData_Struct.MotorAngle_Target[2] = -180;
+    /* ARM TEST */
+        RobotArmData_Struct.MotorAngle_Target[2] = -90;
+    for(int i = 0; i < 1000; i++){
+RobotArmData_Struct.MotorAngle_Target[2] += 0.05;
+      My_mDelay(10);
+    }
 //    RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
 //    My_mDelay(500);
 //    RobotArm_WaitStop();
@@ -308,7 +314,13 @@ void PathWrite_task(void *pvParameters)
 //    My_mDelay(500);
 //    RobotArm_WaitStop();
 //    My_mDelay(1500);
+<<<<<<< HEAD
 //   ChassisCoord_Set(0, 10, 0);
+=======
+
+    /* CHASSIS TEST */
+//    ChassisCoord_Set(0, 10, 0);
+>>>>>>> a6094d7b86bdb1f0066fdc63e2b8647b62152747
 //    ChassisCoord_WaitStop();
 //    My_mDelay(200);
 //    ChassisCoord_Set(0, -10, 0);
@@ -320,11 +332,41 @@ void PathWrite_task(void *pvParameters)
 //    ChassisCoord_Set(0, -10, 0);
 //    ChassisCoord_WaitStop();
 //    My_mDelay(200);
+<<<<<<< HEAD
    rccu_setmode_to_tracking();
 		My_mDelay(50);
 		LineTracker_Execute_Condition1(CarDirection_Right,100, FindEnd_Left, 1, 1);
 //		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
 		Debug_Await();
+=======
+
+
+    /* BRICK FOLLOWING TEST */
+//    RecognitionModule_t.RecognitionModuleSte = 1; // red
+//    RecognitionModule_Start(&RecognitionModule_t);
+//  IdentifyBrick_Get(BrickData_Struct.x, BrickData_Struct.y);
+
+    while( (KEY_4() == 0) || (lcd_page != 1))
+    {
+      My_mDelay(50);
+      rt_thread_t self = rt_thread_self();
+      rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
+      while (*ptr == '#') ptr++;
+      stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
+      stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+    }
+    while( (KEY_4() == 1) || (lcd_page != 1))
+    {
+      My_mDelay(50);
+      rt_thread_t self = rt_thread_self();
+      rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
+      while (*ptr == '#') ptr++;
+      stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
+      stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+    }
+
+    Debug_Await();
+>>>>>>> a6094d7b86bdb1f0066fdc63e2b8647b62152747
   }
 #endif
 
