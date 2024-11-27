@@ -175,6 +175,7 @@ void LineTracker_Execute_OpenLoopWalk_Delay(DirectionDef_e Car_Direction, int16_
 void LineTracker_Execute_LineNum(DirectionDef_e Car_Direction, uint16_t spd, uint8_t line_num, uint8_t mode, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_Delay(DirectionDef_e Car_Direction,uint16_t spd, uint16_t time, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_Condition(DirectionDef_e Car_Direction, uint16_t spd, uint16_t (*ReadData_func)(void), uint16_t TargetState, uint8_t CorrectiveCtrl_Flag);
+void LineTracker_Execute_Condition1(DirectionDef_e Car_Direction, uint16_t spd, uint16_t (*ReadData_func)(void), uint16_t TargetState, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_Wheel_90(DirectionDef_e Car_Direction,int16_t spd, uint16_t distance, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_RotateAngle(DirectionDef_e Car_Direction,int16_t spd, int16_t angle);
 void LineTracker_Execute_Encoder(DirectionDef_e Car_Direction,uint16_t spd, int32_t *pTotal_ecd, uint16_t distance, uint8_t CorrectiveCtrl_Flag);

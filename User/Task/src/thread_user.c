@@ -30,6 +30,8 @@ uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count);
 void LineSingle_Tracker(uint8_t Line_TrackScan, DirectionDef_e Car_Direction);
 uint16_t FindEnd_Head(void);
 uint16_t FindEnd_Tail(void);
+uint16_t FindEnd_Left(void);
+uint16_t FindEnd_Right(void);
 uint16_t FindHead_Obstacle(void);
 uint16_t FindEnd_Obstacle(void);
 uint8_t color_haveget[3] = {0, 0, 0}; //对应color_e里面的数量
@@ -306,19 +308,23 @@ void PathWrite_task(void *pvParameters)
 //    My_mDelay(500);
 //    RobotArm_WaitStop();
 //    My_mDelay(1500);
-    ChassisCoord_Set(0, 10, 0);
-    ChassisCoord_WaitStop();
-    My_mDelay(200);
-    ChassisCoord_Set(0, -10, 0);
-    ChassisCoord_WaitStop();
-    My_mDelay(200);
-    ChassisCoord_Set(0, 10, 0);
-    ChassisCoord_WaitStop();
-    My_mDelay(200);
-    ChassisCoord_Set(0, -10, 0);
-    ChassisCoord_WaitStop();
-    My_mDelay(200);
-    Debug_Await();
+//   ChassisCoord_Set(0, 10, 0);
+//    ChassisCoord_WaitStop();
+//    My_mDelay(200);
+//    ChassisCoord_Set(0, -10, 0);
+//    ChassisCoord_WaitStop();
+//    My_mDelay(200);
+//    ChassisCoord_Set(0, 10, 0);
+//    ChassisCoord_WaitStop();
+//    My_mDelay(200);
+//    ChassisCoord_Set(0, -10, 0);
+//    ChassisCoord_WaitStop();
+//    My_mDelay(200);
+   rccu_setmode_to_tracking();
+		My_mDelay(50);
+		LineTracker_Execute_Condition1(CarDirection_Right,100, FindEnd_Left, 1, 1);
+//		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
+		Debug_Await();
   }
 #endif
 
@@ -1120,6 +1126,32 @@ uint16_t FindEnd_Head(void)
   {
     My_mDelay(5);
     LineTrack_Scan(CarDirection_Head, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
+  return 0;
+}
+uint16_t FindEnd_Left(void)
+{
+  LineTrack_Scan(CarDirection_Left, &Line_Count);
+  while(Line_Count >= 5)
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Left, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
+  return 0;
+}
+uint16_t FindEnd_Right(void)
+{
+  LineTrack_Scan(CarDirection_Right, &Line_Count);
+  while(Line_Count >= 5)
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Right, &Line_Count);
     if(Line_Count >= 5)
       return 1;
     else return 0;

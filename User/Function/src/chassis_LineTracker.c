@@ -1140,6 +1140,34 @@ void LineTracker_Execute_Condition(DirectionDef_e Car_Direction, uint16_t spd, u
     LineTracker_Struct.run_mode = Mode_LineTracker_Condition;
   }
 }
+void LineTracker_Execute_Condition1(DirectionDef_e Car_Direction, uint16_t spd, uint16_t (*ReadData_func)(void), uint16_t TargetState, uint8_t CorrectiveCtrl_Flag)
+{
+  LineTracker_WaitCarToStop();
+  LineTracker_Struct.pLineTracker_ParaStruct = malloc(sizeof(LineTracker_ParaTypeDef));
+  if(LineTracker_Struct.pLineTracker_ParaStruct != 0)
+  {
+    memset(LineTracker_Struct.pLineTracker_ParaStruct, 0, sizeof(LineTracker_ParaTypeDef));
+
+    if(Car_Direction == CarDirection_Head)
+      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal1;
+    else if(Car_Direction == CarDirection_Tail)
+      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal3;
+    else if(Car_Direction == CarDirection_Left)
+      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal2;
+    else if(Car_Direction == CarDirection_Right)
+      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal4;
+    if(spd < LINETRACKER_SPEED_START)
+      Speed_Tracker_NewTask(&LineTracker_Struct.Speed_TrackerStruct, spd);
+    else
+      Speed_Tracker_NewTask(&LineTracker_Struct.Speed_TrackerStruct, LINETRACKER_SPEED_START);
+    LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction = Car_Direction;
+    LineTracker_Struct.pLineTracker_ParaStruct->x_axis_set = spd;
+    LineTracker_Struct.pLineTracker_ParaStruct->CorrectiveCtrl_Flag = CorrectiveCtrl_Flag; //是否循迹纠正
+    LineTracker_Struct.pLineTracker_ParaStruct->ReadData_func = ReadData_func;
+    LineTracker_Struct.pLineTracker_ParaStruct->SetVal = TargetState;
+    LineTracker_Struct.run_mode = Mode_LineTracker_Condition;
+  }
+}
 void LineTracker_Execute_Wheel_90(DirectionDef_e Car_Direction, int16_t spd, uint16_t distance, uint8_t CorrectiveCtrl_Flag)
 {
   LineTracker_WaitCarToStop();
