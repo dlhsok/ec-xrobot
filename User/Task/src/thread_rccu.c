@@ -327,10 +327,10 @@ static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
   //Ñ­¼£¸úËæÆ÷
   LineTracker_Init( 1,
                     CONTROL_FREQ_HZ,
-                    &Tracking_Device1.Tracking_UploadData.DATE.SignalData,   //Ç°
-                    &Tracking_Device2.Tracking_UploadData.DATE.SignalData,   //×ó
-                    &Tracking_Device3.Tracking_UploadData.DATE.SignalData,   //ºó
-                    &Tracking_Device4.Tracking_UploadData.DATE.SignalData ); //ÓÒ
+                    Tracking_Device1.Tracking_UploadADCData.DATE.adc_val,   //Ç°
+                    Tracking_Device2.Tracking_UploadADCData.DATE.adc_val,   //×ó
+                    Tracking_Device3.Tracking_UploadADCData.DATE.adc_val,   //ºó
+                    Tracking_Device4.Tracking_UploadADCData.DATE.adc_val ); //ÓÒ
 }
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

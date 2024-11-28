@@ -355,6 +355,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>stack_percentage,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>39</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>LineTracker_Struct,0x0A</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

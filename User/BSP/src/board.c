@@ -79,7 +79,7 @@ static UART_HandleTypeDef UartHandle;
 static int uart_init(void)
 {
     /* TODO: Please modify the UART port number according to your needs */
-    UartHandle.Instance = USART1;
+    UartHandle.Instance = USART3;
     UartHandle.Init.BaudRate = 115200;
     UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
     UartHandle.Init.StopBits = UART_STOPBITS_1;
