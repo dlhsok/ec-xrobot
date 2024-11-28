@@ -11,7 +11,7 @@
 //	CorrectiveMode_Slash_Double, //双斜线修正（这里的双线指的是十字交叉线）
 //}CorrectiveMode_e;
 /* 私有变量 ------------------------------------------------------------------*/
-pid_t x_pid;
+pid_t x_pid, y_pid;
 pid_t yaw_pid;
 /* 扩展变量 ------------------------------------------------------------------*/
 LineTracker_TypeDef LineTracker_Struct;
@@ -142,7 +142,7 @@ void LineTracker_ChassisPostureCalc(SignalDef_u *pHeadSignal, SignalDef_u *pTail
     LineTracker_Struct.Alpha = atan( ( LineTracker_Struct.Line1 - LineTracker_Struct.Line2 ) / A_LENGTH ) * RAD_TO_ANGLE;
   }
 }
-void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal)
+void LineTracker_ChassisPostureCalc_T_Line(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal)
 {
   float  C, C1;
 
@@ -200,7 +200,7 @@ void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHea
 	
 //  if(LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction < CarDirection_Left)
 //  {
-    LineTracker_Struct.Alpha = atan( ( LineTracker_Struct.Line4 - LineTracker_Struct.Line3 ) / A_LENGTH ) * RAD_TO_ANGLE;
+    LineTracker_Struct.Alpha = -atan( ( LineTracker_Struct.Line4 - LineTracker_Struct.Line3 ) / A_LENGTH ) * RAD_TO_ANGLE;
 //  }
 //  else
 //  {
@@ -208,6 +208,20 @@ void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHea
 //  }
 }
 //static void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode)
+
+void LineTracker_CorrectiveCtrl_T_Line(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal)
+{
+    if( ( pLeftSignal != 0 ) && \
+        ( pHeadSignal != 0 ) && \
+        ( pRightSignal != 0 ) )
+    {
+      LineTracker_ChassisPostureCalc_T_Line(pLeftSignal, pHeadSignal, pRightSignal);
+      LineTracker_Struct.x_axis_out = x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
+      LineTracker_Struct.y_axis_out = y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+      LineTracker_Struct.yaw_out = yaw_pid.f_pid_calc( &yaw_pid, LineTracker_Struct.Alpha, 0.0f );
+    }
+}
+
 void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode)
 {
   switch(mode)
@@ -591,6 +605,40 @@ static void LineTracker_SituAdjust(void)
     }
   }
 }
+static void LineTracker_SituAdjust_T_Line(void)
+{
+  //原地矫正
+  if(LineTracker_Struct.pLineTracker_ParaStruct != 0)
+  {
+    if(LineTracker_Struct.pLineTracker_ParaStruct->TimeMem > (1000 / LineTracker_Struct.CtrlFreqHZ))
+    {
+      LineTracker_Struct.pLineTracker_ParaStruct->TimeMem -= (1000 / LineTracker_Struct.CtrlFreqHZ);
+    }
+    else
+    {
+      LineTracker_Struct.pLineTracker_ParaStruct->TimeMem = 0;
+    }
+    if(LineTracker_Struct.pLineTracker_ParaStruct->TimeMem == 0)
+    {
+      LineTracker_Struct.run_mode = Mode_Await;
+    }
+    else
+    {
+      if(LineTracker_Struct.pLineTracker_ParaStruct->run_state == 0)
+      {
+        LineTracker_CorrectiveCtrl_T_Line(LineTracker_Struct.pLeftSignal, LineTracker_Struct.pHeadSignal, LineTracker_Struct.pRightSignal);
+      }
+    }
+    if(LineTracker_Struct.run_mode == Mode_Await)
+    {
+      LineTracker_Struct.pLineTracker_ParaStruct->run_state = 0;
+      Speed_Tracker_NewTask(&LineTracker_Struct.Speed_TrackerStruct, 0);
+      LineTracker_Struct.y_axis_out = 0;
+      LineTracker_Struct.x_axis_out = 0;
+      LineTracker_Struct.yaw_out = 0;
+    }
+  }
+}
 static void LineTracker_Wheel_90(void)
 {
   //90度转弯
@@ -959,6 +1007,9 @@ void LineTracker_Scan(void)
   case Mode_LineSingleTracker:    //编码器巡线
     LineTracker_Single();
     break;
+	case Mode_LineTracker_SituAdjust_T_Line:
+		LineTracker_SituAdjust_T_Line();
+		break;
   }
   if(LineTracker_Struct.pLineTracker_ParaStruct != 0)
   {
@@ -1018,8 +1069,9 @@ void LineTracker_Init( uint8_t active_level,
                       CtrlFreqHZ,
                       LINETRACKER_SPEED_UP_ACC,
                       LINETRACKER_SPEED_DOWN_ACC );
-
+	
   PID_struct_init(&x_pid, POSITION_PID, LINETRACKER_SPEED_MAX, 200, X_FDBCK_P, X_FDBCK_I, X_FDBCK_D);
+  PID_struct_init(&y_pid, POSITION_PID, LINETRACKER_SPEED_MAX, 200, X_FDBCK_P, X_FDBCK_I, X_FDBCK_D);
   PID_struct_init(&yaw_pid, POSITION_PID, LINETRACKER_SPEED_MAX, 200, YAW_FDBCK_P, YAW_FDBCK_I, YAW_FDBCK_D);
 }
 uint16_t ReadSignal1_TransverseLine_func(void)
@@ -1336,5 +1388,34 @@ void LineTracker_Execute_SituAdjust(DirectionDef_e Car_Direction, uint8_t mode, 
     LineTracker_Struct.pLineTracker_ParaStruct->TimeMem = OutTime;
     LineTracker_Struct.pLineTracker_ParaStruct->run_state = mode;
     LineTracker_Struct.run_mode = Mode_LineTracker_SituAdjust;
+  }
+}
+
+void LineTracker_Execute_SituAdjust_T_Line(DirectionDef_e Car_Direction, uint8_t mode, uint16_t OutTime)
+{
+  LineTracker_WaitCarToStop();
+  LineTracker_Struct.pLineTracker_ParaStruct = malloc(sizeof(LineTracker_ParaTypeDef));
+  if(LineTracker_Struct.pLineTracker_ParaStruct != 0)
+  {
+    memset(LineTracker_Struct.pLineTracker_ParaStruct, 0, sizeof(LineTracker_ParaTypeDef));
+//    if(Car_Direction == CarDirection_Head)
+//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal1;
+//    else if(Car_Direction == CarDirection_Tail)
+//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal3;
+//    else if(Car_Direction == CarDirection_Left)
+//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal2;
+//    else if(Car_Direction == CarDirection_Right)
+//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal4;
+    if(mode == 0)
+    {
+      LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction = CarDirection_Head;
+    }
+    else
+    {
+      LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction = Car_Direction;
+    }
+    LineTracker_Struct.pLineTracker_ParaStruct->TimeMem = OutTime;
+    LineTracker_Struct.pLineTracker_ParaStruct->run_state = mode;
+    LineTracker_Struct.run_mode = Mode_LineTracker_SituAdjust_T_Line;
   }
 }

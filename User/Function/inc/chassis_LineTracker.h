@@ -19,7 +19,7 @@
 
 #define LINETRACKER_ADC_THRESHOLD          230   // 循迹判断黑线的ADC阈值
 #define LINETRACKER_LINE_REFERENCE         5    //横线条件
-#define LINETRACKER_SPEED_MAX              1000 //最大速度
+#define LINETRACKER_SPEED_MAX              400 //最大速度
 #define LINETRACKER_SPEED_START            200  //起步速度
 #define LINETRACKER_SPEED_STOP             200  //止步速度
 #define LINETRACKER_SPEED_BEFORE_TURNING   400  //转弯前前进速度
@@ -81,6 +81,7 @@ typedef enum
   Mode_Rotate_Angle,           //旋转角度
   Mode_LineTracker_Encoder,    //编码器巡线
   Mode_LineSingleTracker,		//单线循迹
+	Mode_LineTracker_SituAdjust_T_Line, // 丁字黑线原地纠正
 } ModeDef_e;
 typedef union
 {
@@ -156,6 +157,9 @@ typedef struct
 	float   D_Offs_y; // 计算车中心距离交线中心竖直距离
   float   Alpha;
   SignalDef_u *pHeadSignal;    //相对方向头信号
+	SignalDef_u *pLeftSignal;    //相对方向左信号
+	SignalDef_u *pRightSignal;    //相对方向右信号
+
   SignalDef_u *pSignal1;       //信号1
   SignalDef_u *pSignal2;       //信号2
   SignalDef_u *pSignal3;       //信号3
@@ -187,8 +191,12 @@ void LineTracker_Execute_Wheel_90(DirectionDef_e Car_Direction, int16_t spd, uin
 void LineTracker_Execute_RotateAngle(DirectionDef_e Car_Direction, int16_t spd, int16_t angle);
 void LineTracker_Execute_Encoder(DirectionDef_e Car_Direction, uint16_t spd, int32_t *pTotal_ecd, uint16_t distance, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_SituAdjust(DirectionDef_e Car_Direction, uint8_t mode, uint16_t OutTime);
+void LineTracker_Execute_SituAdjust_T_Line(DirectionDef_e Car_Direction, uint8_t mode, uint16_t OutTime);
+
 void LineTracker_ChassisPostureCalc(SignalDef_u *pHeadSignal, SignalDef_u *pTailSignal);
-void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal);
+void LineTracker_ChassisPostureCalc_T_Line(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal);
 void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode);
+void LineTracker_CorrectiveCtrl_T_Line(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal);
+
 #endif  // __CHASSIS_LINETRACKER_H__
 
