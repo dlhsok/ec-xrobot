@@ -142,6 +142,71 @@ void LineTracker_ChassisPostureCalc(SignalDef_u *pHeadSignal, SignalDef_u *pTail
     LineTracker_Struct.Alpha = atan( ( LineTracker_Struct.Line1 - LineTracker_Struct.Line2 ) / A_LENGTH ) * RAD_TO_ANGLE;
   }
 }
+void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal)
+{
+  float  C, C1;
+
+//  if(LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction < CarDirection_Left) // 前后
+//  {
+    C = (LINETRACKER_WHEELTRACK - RL_LENGTH_FAC) / 2.0f; // （轮距-循迹条长度）/ 2
+    C1 = (LINETRACKER_WHEELBASE - RL_LENGTH_FAC) / 2.0f; // （轴距-循迹条长度）/ 2
+//		
+//  }
+//  else // 左右
+//  {
+//    C1 = (LINETRACKER_WHEELTRACK - RL_LENGTH_FAC) / 2.0f; // （轮距-循迹条长度）/ 2
+//    C = (LINETRACKER_WHEELBASE - RL_LENGTH_FAC) / 2.0f; // （轴距-循迹条长度）/ 2
+//  }
+  if((pLeftSignal->byte != 0x00) && (pLeftSignal->byte != 0xff))
+  {
+    //计算黑线与小车左部最后侧边沿的距离
+    LineTracker_Struct.Line3 = RL_LENGTH_FAC - LineTracker_DistanceCalc(pLeftSignal) + C1;
+  }
+  if((pHeadSignal->byte != 0x00) && (pHeadSignal->byte != 0xff))
+  {
+    //计算黑线与小车头部最左侧边沿的距离
+    LineTracker_Struct.Line1 = RL_LENGTH_FAC - LineTracker_DistanceCalc(pHeadSignal) + C;
+  }
+  if((pRightSignal->byte != 0x00) && (pRightSignal->byte != 0xff))
+  {
+    //计算黑线与小车尾部左侧边沿的距离
+    LineTracker_Struct.Line4 = LineTracker_DistanceCalc(pRightSignal) + C1;
+  }
+	LineTracker_Struct.Line2 = 0;
+	
+	 // 计算k和b
+	double l_1 = LineTracker_Struct.Line1;
+	double l_4 = LineTracker_Struct.Line4;
+	double l_3 = LineTracker_Struct.Line3;
+	double W_T = RL_LENGTH_FAC + (2.0f * C);
+	double W_B = RL_LENGTH_FAC + (2.0f * C1);
+	double A = A_LENGTH;
+	double B = B_LENGTH;
+	
+  double k = (l_4 - l_3) / A;
+  double b = l_4 - (W_B / 2) - (k * A / 2);
+
+  // 计算交点的x坐标
+  double x = ((B * k / 2) + l_1 - (W_T / 2) - (b * k)) / (k * k + 1);
+
+  // 计算交点的y坐标
+  double y = k * x + b;
+
+	LineTracker_Struct.D_Offs_y = -y;
+	LineTracker_Struct.D_Offs = -x;
+	
+//  LineTracker_Struct.D_Offs_y = ( RL_LENGTH_FAC + (2.0f * C1) - ( LineTracker_Struct.Line3 + LineTracker_Struct.Line4 ) ) / 2.0f;
+//  LineTracker_Struct.D_Offs = ( RL_LENGTH_FAC + (2.0f * C) - ( LineTracker_Struct.Line1 + LineTracker_Struct.Line2 ) ) / 2.0f;
+	
+//  if(LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction < CarDirection_Left)
+//  {
+    LineTracker_Struct.Alpha = atan( ( LineTracker_Struct.Line4 - LineTracker_Struct.Line3 ) / A_LENGTH ) * RAD_TO_ANGLE;
+//  }
+//  else
+//  {
+//    LineTracker_Struct.Alpha = atan( ( LineTracker_Struct.Line1 - LineTracker_Struct.Line2 ) / A_LENGTH ) * RAD_TO_ANGLE;
+//  }
+}
 //static void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode)
 void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode)
 {

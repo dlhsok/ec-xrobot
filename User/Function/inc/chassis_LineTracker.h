@@ -148,9 +148,12 @@ typedef struct
   int16_t   x_axis_PracticalOut;//X实际输出值
   int16_t   yaw_PracticalOut;   //旋转实际输出值
   Speed_Tracker_Typedef Speed_TrackerStruct;
-  float   Line1;
-  float   Line2;
-  float   D_Offs;
+  float   Line1; //计算黑线与小车头部最左侧边沿的距离
+  float   Line2; //计算黑线与小车尾部最左侧边沿的距离
+	float   Line3; //计算黑线与小车左部最后侧边沿的距离
+	float   Line4; //计算黑线与小车右部最后侧边沿的距离
+  float   D_Offs; // 计算车中心距离交线中心水平距离
+	float   D_Offs_y; // 计算车中心距离交线中心竖直距离
   float   Alpha;
   SignalDef_u *pHeadSignal;    //相对方向头信号
   SignalDef_u *pSignal1;       //信号1
@@ -185,6 +188,7 @@ void LineTracker_Execute_RotateAngle(DirectionDef_e Car_Direction, int16_t spd, 
 void LineTracker_Execute_Encoder(DirectionDef_e Car_Direction, uint16_t spd, int32_t *pTotal_ecd, uint16_t distance, uint8_t CorrectiveCtrl_Flag);
 void LineTracker_Execute_SituAdjust(DirectionDef_e Car_Direction, uint8_t mode, uint16_t OutTime);
 void LineTracker_ChassisPostureCalc(SignalDef_u *pHeadSignal, SignalDef_u *pTailSignal);
+void LineTracker_ChassisPostureCalc1(SignalDef_u *pLeftSignal, SignalDef_u *pHeadSignal, SignalDef_u *pRightSignal);
 void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode);
 #endif  // __CHASSIS_LINETRACKER_H__
 
