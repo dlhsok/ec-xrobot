@@ -124,12 +124,12 @@ void LineTracker_ChassisPostureCalc(SignalDef_u *pHeadSignal, SignalDef_u *pTail
   }
   if((pHeadSignal->byte != 0x00) && (pHeadSignal->byte != 0xff))
   {
-    //计算白线与小车头部最左侧边沿的距离
+    //计算黑线与小车头部最左侧边沿的距离
     LineTracker_Struct.Line1 = RL_LENGTH_FAC - LineTracker_DistanceCalc(pHeadSignal) + C;
   }
   if((pTailSignal->byte != 0x00) && (pTailSignal->byte != 0xff))
   {
-    //计算白线与小车尾部左侧边沿的距离
+    //计算黑线与小车尾部左侧边沿的距离
     LineTracker_Struct.Line2 = LineTracker_DistanceCalc(pTailSignal) + C;
   }
   LineTracker_Struct.D_Offs = ( RL_LENGTH_FAC + (2.0f * C) - ( LineTracker_Struct.Line1 + LineTracker_Struct.Line2 ) ) / 2.0f;
