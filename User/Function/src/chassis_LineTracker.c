@@ -216,9 +216,25 @@ void LineTracker_CorrectiveCtrl_T_Line(SignalDef_u *pLeftSignal, SignalDef_u *pH
         ( pRightSignal != 0 ) )
     {
       LineTracker_ChassisPostureCalc_T_Line(pLeftSignal, pHeadSignal, pRightSignal);
-      LineTracker_Struct.x_axis_out = x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
-      LineTracker_Struct.y_axis_out = y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+			if (LineTracker_Struct.dir == CarDirection_Head){
+				LineTracker_Struct.x_axis_out = x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
+				LineTracker_Struct.y_axis_out = y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+			}
+			else if (LineTracker_Struct.dir == CarDirection_Left){
+				LineTracker_Struct.x_axis_out = -y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+				LineTracker_Struct.y_axis_out = x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
+			}
+			else if (LineTracker_Struct.dir == CarDirection_Tail){
+				LineTracker_Struct.x_axis_out = -x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
+				LineTracker_Struct.y_axis_out = -y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+			}
+			else if (LineTracker_Struct.dir == CarDirection_Right){
+				LineTracker_Struct.x_axis_out = y_pid.f_pid_calc( &y_pid, LineTracker_Struct.D_Offs_y, 0.0f );
+				LineTracker_Struct.y_axis_out = -x_pid.f_pid_calc( &x_pid, LineTracker_Struct.D_Offs, 0.0f );
+			}
+			
       LineTracker_Struct.yaw_out = yaw_pid.f_pid_calc( &yaw_pid, LineTracker_Struct.Alpha, 0.0f );
+			
     }
 }
 
@@ -1398,14 +1414,27 @@ void LineTracker_Execute_SituAdjust_T_Line(DirectionDef_e Car_Direction, uint8_t
   if(LineTracker_Struct.pLineTracker_ParaStruct != 0)
   {
     memset(LineTracker_Struct.pLineTracker_ParaStruct, 0, sizeof(LineTracker_ParaTypeDef));
-//    if(Car_Direction == CarDirection_Head)
-//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal1;
-//    else if(Car_Direction == CarDirection_Tail)
-//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal3;
-//    else if(Car_Direction == CarDirection_Left)
-//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal2;
-//    else if(Car_Direction == CarDirection_Right)
-//      LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal4;
+		LineTracker_Struct.dir = Car_Direction;
+    if(Car_Direction == CarDirection_Head){			
+			LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal1;
+			LineTracker_Struct.pLeftSignal = LineTracker_Struct.pSignal2;
+			LineTracker_Struct.pRightSignal = LineTracker_Struct.pSignal4;
+		}
+    else if(Car_Direction == CarDirection_Tail){			
+			LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal3;
+			LineTracker_Struct.pLeftSignal = LineTracker_Struct.pSignal4;
+			LineTracker_Struct.pRightSignal = LineTracker_Struct.pSignal2;
+		}
+    else if(Car_Direction == CarDirection_Left){			
+			LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal2;
+			LineTracker_Struct.pLeftSignal = LineTracker_Struct.pSignal3;
+			LineTracker_Struct.pRightSignal = LineTracker_Struct.pSignal1;
+		}
+    else if(Car_Direction == CarDirection_Right){			
+			LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal4;
+			LineTracker_Struct.pLeftSignal = LineTracker_Struct.pSignal1;
+			LineTracker_Struct.pRightSignal = LineTracker_Struct.pSignal3;
+		}
     if(mode == 0)
     {
       LineTracker_Struct.pLineTracker_ParaStruct->Car_Direction = CarDirection_Head;

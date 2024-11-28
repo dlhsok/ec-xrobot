@@ -279,6 +279,7 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
 uint8_t time_cnt = 0, Line_Count = 0;;
 uint8_t Line_ScanNum = 0;
 int stack_free, stack_percentage;
+int count_test = 0;
 void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
@@ -353,10 +354,9 @@ void PathWrite_task(void *pvParameters)
 //    LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Head, 1, 1);
 //		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
 		while(1){
-			LineTracker_Struct.pHeadSignal = LineTracker_Struct.pSignal1;
-			LineTracker_Struct.pLeftSignal = LineTracker_Struct.pSignal2;
-			LineTracker_Struct.pRightSignal = LineTracker_Struct.pSignal4;
-			LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+
+			LineTracker_Execute_SituAdjust_T_Line(CarDirection_Left, 0, 1000);
+			count_test++;
 //			LineTracker_CorrectiveCtrl_T_Line(LineTracker_Struct.pSignal2, LineTracker_Struct.pSignal1, LineTracker_Struct.pSignal4);
 //			LineTracker_ChassisPostureCalc_T_Line(LineTracker_Struct.pSignal2, LineTracker_Struct.pSignal1, LineTracker_Struct.pSignal4);
       My_mDelay(50);

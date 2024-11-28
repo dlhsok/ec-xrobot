@@ -156,6 +156,9 @@ typedef struct
   float   D_Offs; // 计算车中心距离交线中心水平距离
 	float   D_Offs_y; // 计算车中心距离交线中心竖直距离
   float   Alpha;
+	
+	DirectionDef_e dir;
+	
   SignalDef_u *pHeadSignal;    //相对方向头信号
 	SignalDef_u *pLeftSignal;    //相对方向左信号
 	SignalDef_u *pRightSignal;    //相对方向右信号
