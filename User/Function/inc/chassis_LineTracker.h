@@ -101,7 +101,7 @@ typedef union
         uint8_t  ls1 :1;
 	#else
 		//接口朝内
-				uint8_t  adc;
+				uint8_t  adc[8];
         uint8_t  ls1 :1;
         uint8_t  ls2 :1;
         uint8_t  ls3 :1;
