@@ -49,7 +49,7 @@ extern "C" {
  *              电机参数                                                     *
  ******************************************************************************/
 #define MOTOR_REDUCTION_RATIO       (1.0f)       //电机减速比
-#define MOTOR_ENCODER_ACCURACY      (550)        //电机编码器分辨率
+#define MOTOR_ENCODER_ACCURACY      (990)        //电机编码器分辨率
 /* Exported types ------------------------------------------------------------*/
 //重新定义数据类型
 typedef unsigned char bool_t;

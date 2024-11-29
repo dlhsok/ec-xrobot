@@ -14,17 +14,17 @@
 //控制频率_hz
 #define CONTROL_FREQ_HZ			  (100)
 //YAW PID参数
-#define De_YAW_KP                 3.0f
+#define De_YAW_KP                 1.0f
 #define De_YAW_KI                 0.0f
-#define De_YAW_KD                 1.0f
+#define De_YAW_KD                 0.0f
 //X PID参数
-#define De_LOCX_KP                4.8f
+#define De_LOCX_KP                3.0f
 #define De_LOCX_KI                0.0f
-#define De_LOCX_KD                5.0f
+#define De_LOCX_KD                1.0f
 //Y PID参数
-#define De_LOCY_KP                4.8f
+#define De_LOCY_KP                3.0f
 #define De_LOCY_KI                0.0f
-#define De_LOCY_KD                5.0f
+#define De_LOCY_KD                1.0f
 /* Private types -------------------------------------------------------------*/
 typedef enum
 {
@@ -407,7 +407,7 @@ void ChassisCoord_WaitStop(void)
          ( ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_x - rccu_struct.ChassisCoord_CtrlStruct.goal_x) > 1.0f ) || \
          ( ABS(rccu_struct.LocationX_pid.err[NOW]) > 10 ) || \
          ( ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_yaw - rccu_struct.ChassisCoord_CtrlStruct.goal_yaw) > 0.5f) || \
-         ( ABS(rccu_struct.YawAngle_pid.err[NOW]) > 0.2f ) )
+         ( ABS(rccu_struct.YawAngle_pid.err[NOW]) > 0.5f ) )
   {
     My_mDelay(10);
   }
@@ -452,6 +452,14 @@ void ChassisSpeed_Set1(float _x_spd, float _y_spd, float _yaw)
 void rccu_setmode_to_tracking( void )
 {
   rccu_struct.mode_order = CHASSIS_TRACKING;
+}
+void rccu_setmode_to_coord( void )
+{
+  rccu_struct.mode_order = CHASSIS_COORD;
+}
+void rccu_setmode_to_normal( void )
+{
+  rccu_struct.mode_order = CHASSIS_NORMAL;
 }
 int32_t Read_Position_x_mm(void)
 {

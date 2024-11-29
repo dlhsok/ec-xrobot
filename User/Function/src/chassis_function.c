@@ -75,7 +75,7 @@ static void Mecanum_Calculate_ForwardTransform( ChassisHandle_TypeDef* chassis_h
 {
   //麦克纳姆轮正运算函数
   static double last_d_x, last_d_y, last_d_w, d_x, d_y, d_w, diff_d_x, diff_d_y, diff_d_w;
-  static double mecanum_angle;
+  static double mecanum_angle, last_mecanum_angle, diff_mecanum_angle;
   static double position_x, position_y, angle_w;
   static double v_x, v_y, v_w;
 
@@ -92,6 +92,7 @@ static void Mecanum_Calculate_ForwardTransform( ChassisHandle_TypeDef* chassis_h
   last_d_x = d_x;
   last_d_y = d_y;
   last_d_w = d_w;
+	last_mecanum_angle = mecanum_angle;
 
   d_x = chassis_handle->ecd_ratio * (-chassis_handle->position.total_ecd[0] + chassis_handle->position.total_ecd[1] - chassis_handle->position.total_ecd[2] + chassis_handle->position.total_ecd[3]);
   d_y = chassis_handle->ecd_ratio * (chassis_handle->position.total_ecd[0] + chassis_handle->position.total_ecd[1] + chassis_handle->position.total_ecd[2] + chassis_handle->position.total_ecd[3]);
@@ -102,13 +103,23 @@ static void Mecanum_Calculate_ForwardTransform( ChassisHandle_TypeDef* chassis_h
   diff_d_x = d_x - last_d_x;
   diff_d_y = d_y - last_d_y;
   diff_d_w = d_w - last_d_w;
+	diff_mecanum_angle = mecanum_angle - last_mecanum_angle;
+	if(diff_mecanum_angle > 180)
+	{
+		diff_mecanum_angle -= 360;
+	}
+	else if(diff_mecanum_angle < -180)
+	{
+		diff_mecanum_angle += 360;
+	}
 
   /* use glb_chassis gyro angle data */
   mecanum_angle = chassis_handle->yaw_gyro_angle / RAD_TO_ANGLE;
 
   position_x += diff_d_x * cos(mecanum_angle) - diff_d_y * sin(mecanum_angle);
   position_y += diff_d_x * sin(mecanum_angle) + diff_d_y * cos(mecanum_angle);
-  angle_w += diff_d_w;
+//  angle_w += diff_d_w;
+	angle_w += diff_mecanum_angle;
 
   chassis_handle->position.position_x_mm = position_x;        //mm
   chassis_handle->position.position_y_mm = position_y;        //mm

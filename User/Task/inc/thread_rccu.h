@@ -26,6 +26,8 @@ void ChassisSpeed_Set(float _x_spd, float _y_spd);
 int32_t Read_Position_x_mm(void);
 int32_t Read_Position_y_mm(void);
 void rccu_setmode_to_tracking( void );
+void rccu_setmode_to_coord( void );
+void rccu_setmode_to_normal( void );
 void ChassisStop(void);
 void ChassisSpeed_WaitCarToStop(void);
 void ChassisSpeed_Set1(float _x_spd, float _y_spd ,float _yaw);

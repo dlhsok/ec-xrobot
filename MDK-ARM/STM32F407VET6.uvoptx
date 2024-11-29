@@ -163,7 +163,7 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rccu_struct</ItemText>
+          <ItemText>rccu_struct,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
@@ -375,6 +375,21 @@
           <WinNumber>1</WinNumber>
           <ItemText>\\STM32F407VET6\../User/Task/src/thread_user.c\stack_percentage</ItemText>
         </Ww>
+        <Ww>
+          <count>43</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>UltrasonicRanging_S,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>44</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>chassis_handle</ItemText>
+        </Ww>
+        <Ww>
+          <count>45</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>count_test,0x0A</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
@@ -426,6 +441,26 @@
           <count>9</count>
           <WinNumber>2</WinNumber>
           <ItemText>IdentifyBrick_Get_cnt,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>chassis_handle</ItemText>
+        </Ww>
+        <Ww>
+          <count>11</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>\\STM32F407VET6\../User/Task/src/thread_rccu.c\rccu_struct.chassis_struct.position</ItemText>
+        </Ww>
+        <Ww>
+          <count>12</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ChassisCoord_CtrlStruct</ItemText>
+        </Ww>
+        <Ww>
+          <count>13</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>\\STM32F407VET6\../User/Task/src/thread_rccu.c\rccu_struct.ChassisCoord_CtrlStruct</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>
