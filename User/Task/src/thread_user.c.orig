@@ -348,7 +348,7 @@ void PathWrite_task(void *pvParameters)
   while( (KEY_4() == 0) || (lcd_page != 1))
     My_mDelay(10);
 
-  game_stat = CHASSIS_STATE_9;
+  game_stat = CHASSIS_STATE_1;
 
 #if 1 //
   while(1)
@@ -489,26 +489,15 @@ void PathWrite_task(void *pvParameters)
             case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
               // 先夹取上面的，中间的，下面的
 //						利用brick_count;
-            if(brick_count == 0)
-              color_now = color_red; // 我夹到了红色
-            else if(brick_count == 1)
-              color_now = color_green; // 我夹到了红色
-            else if(brick_count == 2)
-              color_now = color_blue; // 我夹到了红色
-            else if(brick_count == 2)
-              color_now = color_red; // 我夹到了红色
-              if(color_now == color_red)
-                {
-                  game_stat = CHASSIS_STATE_3;
-                }
-              else if(color_now == color_green)
-                {
-                  game_stat = CHASSIS_STATE_4;
-                }
-              else if(color_now == color_blue)
-                {
-                  game_stat = CHASSIS_STATE_5;
-                }
+              if(brick_count == 0)
+                color_now = color_red; // 我夹到了红色
+              else if(brick_count == 1)
+                color_now = color_green; // 我夹到了红色
+              else if(brick_count == 2)
+                color_now = color_blue; // 我夹到了红色
+              else if(brick_count == 2)
+                color_now = color_red; // 我夹到了红色
+              game_stat = CHASSIS_STATE_3;
               break;
             case CHASSIS_STATE_3:  // 底盘从资源岛到第一个丁字路口并在位修正
               ChassisSpeed_Set(-v2, 0);
@@ -593,6 +582,10 @@ void PathWrite_task(void *pvParameters)
               // 底盘从红色终点前丁字路口出发返回绿色终点
               ChassisSpeed_Set(v2, 0);
               My_mDelay(1000 * l7 / v2);
+						              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+              My_mDelay(1000);
               game_stat = CHASSIS_STATE_10;
               break;
             case CHASSIS_STATE_10:
@@ -613,24 +606,29 @@ void PathWrite_task(void *pvParameters)
               LineTracker_WaitCarToStop();
               ChassisSpeed_Set(0, -v2);
               My_mDelay(1000 * l4 / v2);
+												              rccu_setmode_to_tracking();
+              My_mDelay(100);
               LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
               My_mDelay(1000);
               ChassisSpeed_Set(v2, 0);
               My_mDelay(1000 * l2 / v2);
               brick_count++;
-              ChassisSpeed_Set(0, 0);
               game_stat = CHASSIS_STATE_2;
               break;
             case CHASSIS_STATE_11:
               // 底盘从蓝色终点前丁字路口出发返回绿色终点
               ChassisSpeed_Set(-v2, 0);
               My_mDelay(1000 * l7 / v2);
+												              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+              My_mDelay(1000);
               game_stat = CHASSIS_STATE_10;
               break;
             default:
               break;
             }
-ChassisSpeed_Set(0, 0);
+          ChassisSpeed_Set(0, 0);
           buzz_note_state_delay_100ms_end();
           My_mDelay(1000);
         }

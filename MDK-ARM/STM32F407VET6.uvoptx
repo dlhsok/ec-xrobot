@@ -485,7 +485,7 @@
         <Ww>
           <count>15</count>
           <WinNumber>2</WinNumber>
-          <ItemText>game_stat</ItemText>
+          <ItemText>game_stat,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
