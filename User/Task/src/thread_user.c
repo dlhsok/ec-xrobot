@@ -301,8 +301,8 @@ int count_test = 10;
 robot_chassis_state game_stat, last_game_stat; // game的状态和上次状态
 float v1 = 100, v2 = 200, v3 = 300; // 三挡速度
 uint8_t brick_count; // 已经夹取物块数量
-float l1 = 800, // 启动区到资源岛
-      l2 = 250, // 资源岛到第一个丁字路口
+float l1 = 900, // 启动区到资源岛
+      l2 = 350, // 资源岛到第一个丁字路口
       l3 = 400, // 避障左右移动距离
       l4 = 200, // 车前进方向碰线后进行T字修正前移动量
       l5 = 1200, // 超车障碍块前后移动距离
@@ -489,6 +489,13 @@ void PathWrite_task(void *pvParameters)
             case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
               // 先夹取上面的，中间的，下面的
 //						利用brick_count;
+            if(brick_count == 0)
+              color_now = color_red; // 我夹到了红色
+            else if(brick_count == 1)
+              color_now = color_green; // 我夹到了红色
+            else if(brick_count == 2)
+              color_now = color_blue; // 我夹到了红色
+            else if(brick_count == 2)
               color_now = color_red; // 我夹到了红色
               if(color_now == color_red)
                 {
@@ -583,8 +590,8 @@ void PathWrite_task(void *pvParameters)
                 }
               break;
             case CHASSIS_STATE_9:
-              // 底盘从红色终点前丁字路口出发返回资源岛
-              ChassisSpeed_Set(0, v2);
+              // 底盘从红色终点前丁字路口出发返回绿色终点
+              ChassisSpeed_Set(v2, 0);
               My_mDelay(1000 * l7 / v2);
               game_stat = CHASSIS_STATE_10;
               break;
@@ -611,11 +618,12 @@ void PathWrite_task(void *pvParameters)
               ChassisSpeed_Set(v2, 0);
               My_mDelay(1000 * l2 / v2);
               brick_count++;
+              ChassisSpeed_Set(0, 0);
               game_stat = CHASSIS_STATE_2;
               break;
             case CHASSIS_STATE_11:
-              // 底盘从蓝色终点前丁字路口出发返回红色终点
-              ChassisSpeed_Set(0, v2);
+              // 底盘从蓝色终点前丁字路口出发返回绿色终点
+              ChassisSpeed_Set(-v2, 0);
               My_mDelay(1000 * l7 / v2);
               game_stat = CHASSIS_STATE_10;
               break;
@@ -624,7 +632,7 @@ void PathWrite_task(void *pvParameters)
             }
 
           buzz_note_state_delay_100ms_end();
-          My_mDelay(5000);
+          My_mDelay(1000);
         }
       while( (KEY_4() == 0) || (lcd_page != 1))
         {
