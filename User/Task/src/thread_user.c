@@ -47,6 +47,7 @@ typedef enum
   color_blue,
 } color_e;
 uint8_t color_set[] = {color_red, color_green, color_blue, color_green, color_blue, color_red};
+color_e color_now = color_green; // 当前正在夹取的物块颜色
 /***************************************************************/
 
 
@@ -280,18 +281,15 @@ typedef enum
   CHASSIS_STATE_STOP = 0,  // 底盘机械臂停止
   CHASSIS_STATE_1,         // 底盘从启动区到资源岛
   CHASSIS_STATE_2,         // 机械臂从资源岛夹取物块
-  CHASSIS_STATE_3,         // 底盘从资源岛到第一个丁字路口
+  CHASSIS_STATE_3,         // 底盘从资源岛到第一个丁字路口并在位修正
   CHASSIS_STATE_4,         // 底盘从第一个丁字路口往前走避障
-  CHASSIS_STATE_5,         // 底盘检测到障碍物之后走到红色终点前丁字路口
-  CHASSIS_STATE_6,         // 底盘检测到障碍物之后走到绿色终点前丁字路口
-  CHASSIS_STATE_7,         // 底盘检测到障碍物之后走到蓝色终点前丁字路口
-  CHASSIS_STATE_8,         // 底盘在终点前红色丁字路口停止
-  CHASSIS_STATE_9,         // 底盘在终点前绿色丁字路口停止
-  CHASSIS_STATE_10,        // 底盘在终点前蓝色丁字路口停止
-	CHASSIS_STATE_11,        // 机械臂放置物块到终点
-  CHASSIS_STATE_12,        // 底盘从红色终点前丁字路口出发返回第一个丁字路口
-  CHASSIS_STATE_13,        // 底盘从绿色终点前丁字路口出发返回第一个丁字路口
-  CHASSIS_STATE_14,        // 底盘从蓝色终点前丁字路口出发返回第一个丁字路口
+  CHASSIS_STATE_5,         // 底盘绿色终点走向红色终点前丁字路口并在位修正
+  CHASSIS_STATE_6,         // 底盘检测到障碍物之后走到绿色终点前丁字路口并在位修正
+  CHASSIS_STATE_7,         // 底盘绿色终点走向蓝色终点前丁字路口并在位修正
+  CHASSIS_STATE_8,         // 机械臂放置物块到终点函数
+  CHASSIS_STATE_9,         // 底盘从红色终点前丁字路口出发返回第一个丁字路口
+  CHASSIS_STATE_10,        // 底盘从绿色终点前丁字路口出发返回第一个丁字路口
+  CHASSIS_STATE_11,        // 底盘从蓝色终点前丁字路口出发返回第一个丁字路口
 
 
 } robot_chassis_state;
@@ -300,8 +298,18 @@ uint8_t time_cnt = 0, Line_Count = 0;;
 uint8_t Line_ScanNum = 0;
 int stack_free, stack_percentage;
 int count_test = 10;
-robot_chassis_state game_stat, last_game_stat;
-float v1=100,v2=200,v3=300;
+robot_chassis_state game_stat, last_game_stat; // game的状态和上次状态
+float v1=100,v2=200,v3=300; // 三挡速度
+uint8_t brick_count; // 已经夹取物块数量
+float l1 = 800, // 启动区到资源岛
+      l2 = 350, // 资源岛到第一个丁字路口
+      l3 = 320, // 避障左右移动距离
+      l4 = 200, // 车前进方向碰线后进行T字修正前移动量
+      l5 = 820, // 超车障碍块前后移动距离
+      l6 = 1200, // 从红色终点T字往回走到
+      l7 = 520; //
+
+
 void buzz_note_state_delay_100ms_begin()
 {
   buzzerSound(M1);
@@ -459,110 +467,148 @@ void PathWrite_task(void *pvParameters)
           last_game_stat = game_stat;
           switch(game_stat)
             {
-            case CHASSIS_STATE_STOP:
+            case CHASSIS_STATE_STOP:  // 底盘机械臂停止
               break;
-            case CHASSIS_STATE_1:
+            case CHASSIS_STATE_1:  // 底盘从启动区到资源岛
               ChassisSpeed_Set(v2,0);
-              My_mDelay(800/v2);
+              My_mDelay(l1/v2);
               rccu_setmode_to_tracking();
               My_mDelay(100);
               LineTracker_Execute_SituAdjust(CarDirection_Right,1,1000);
               game_stat = CHASSIS_STATE_2;
               break;
-            case CHASSIS_STATE_2:
+            case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
               // 先夹取上面的，中间的，下面的
-//							if(color == color_red)
-//							{
-//              game_stat = CHASSIS_STATE_3;
-//							}
-//							else if(color == color_green)
-//							{
-//              game_stat = CHASSIS_STATE_4;
-//							}
-//							else if(color == color_blue)
-//							{
-//              game_stat = CHASSIS_STATE_5;
-//							}
-              game_stat = CHASSIS_STATE_3;
+//						利用brick_count;
+              color_now = color_red; // 我夹到了红色
+              if(color_now == color_red)
+                {
+                  game_stat = CHASSIS_STATE_3;
+                }
+              else if(color_now == color_green)
+                {
+                  game_stat = CHASSIS_STATE_4;
+                }
+              else if(color_now == color_blue)
+                {
+                  game_stat = CHASSIS_STATE_5;
+                }
               break;
-            case CHASSIS_STATE_3:
+            case CHASSIS_STATE_3:  // 底盘从资源岛到第一个丁字路口并在位修正
               ChassisSpeed_Set(-v2,0);
-              My_mDelay(350/v2);
+              My_mDelay(l2/v2);
               rccu_setmode_to_tracking();
               My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
               game_stat = CHASSIS_STATE_4;
               break;
-            case CHASSIS_STATE_4:
+            case CHASSIS_STATE_4:  // 底盘从第一个丁字路口往前走避障
               rccu_setmode_to_tracking();
               My_mDelay(100);
               LineTracker_Execute_Condition(CarDirection_Head, v1, FindHead_Obstacle, 1, 1);
               LineTracker_WaitCarToStop();
-//							if(color == color_red)
-//							{
-//              game_stat = CHASSIS_STATE_5;
-//							}
-//							else if(color == color_green)
-//							{
-//              game_stat = CHASSIS_STATE_6;
-//							}
-//							else if(color == color_blue)
-//							{
-//              game_stat = CHASSIS_STATE_7;
-//							}
-              game_stat = CHASSIS_STATE_5;
+              game_stat = CHASSIS_STATE_6;
               break;
             case CHASSIS_STATE_5:
               ChassisSpeed_Set(-v2,0);
-              My_mDelay(320/v2);
+              My_mDelay(l7/v2);
               rccu_setmode_to_tracking();
               My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Head, v1, FindEnd_Head, 1, 0);
-              LineTracker_WaitCarToStop();
-              ChassisSpeed_Set(0,v2);
-              My_mDelay(120/v2);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
               game_stat = CHASSIS_STATE_8;
               break;
-            case CHASSIS_STATE_6:
+            case CHASSIS_STATE_6:  // 底盘检测到障碍物之后走到绿色终点前丁字路口并在位修正
               ChassisSpeed_Set(-v2,0);
-              My_mDelay(320/v2);
+              My_mDelay(l3/v2);
               ChassisSpeed_Set(0,v2);
-              My_mDelay(820/v2);
+              My_mDelay(l5/v2);
               ChassisSpeed_Set(v2,0);
-              My_mDelay(320/v2);
+              My_mDelay(l3/v2);
               rccu_setmode_to_tracking();
               My_mDelay(100);
               LineTracker_Execute_Condition(CarDirection_Head, v1, FindEnd_Head, 1, 0);
               LineTracker_WaitCarToStop();
               ChassisSpeed_Set(0,v2);
-              My_mDelay(120/v2);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-              game_stat = CHASSIS_STATE_9;
+              My_mDelay(l4/v2);
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+              if(color_now == color_red)
+                {
+                  game_stat = CHASSIS_STATE_5;
+                }
+              else if(color_now == color_green)
+                {
+                  game_stat = CHASSIS_STATE_8;
+                }
+              else if(color_now == color_blue)
+                {
+                  game_stat = CHASSIS_STATE_7;
+                }
               break;
             case CHASSIS_STATE_7:
               ChassisSpeed_Set(v2,0);
-              My_mDelay(320/v2);
+              My_mDelay(l7/v2);
               rccu_setmode_to_tracking();
               My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Head, v1, FindEnd_Head, 1, 0);
-              LineTracker_WaitCarToStop();
-              ChassisSpeed_Set(0,v2);
-              My_mDelay(120/v2);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-              game_stat = CHASSIS_STATE_10;
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+              game_stat = CHASSIS_STATE_8;
               break;
             case CHASSIS_STATE_8:
               // 机械臂放置物块函数
+              if(color_now == color_red)
+                {
+                  game_stat = CHASSIS_STATE_9;
+                }
+              else if(color_now == color_green)
+                {
+                  game_stat = CHASSIS_STATE_10;
+                }
+              else if(color_now == color_blue)
+                {
+                  game_stat = CHASSIS_STATE_11;
+                }
               break;
             case CHASSIS_STATE_9:
-              // 机械臂放置物块函数
+              // 底盘从红色终点前丁字路口出发返回资源岛
+              ChassisSpeed_Set(0,-v2);
+              My_mDelay(l6/v2);
+              ChassisSpeed_Set(v2,0);
+              My_mDelay(l7/v2);
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_Condition(CarDirection_Tail, v1, FindEnd_Tail, 1, 0);
+              LineTracker_WaitCarToStop();
+              ChassisSpeed_Set(0,-v2);
+              My_mDelay(l4/v2);
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+              ChassisSpeed_Set(v2,0);
+              My_mDelay(l2/v2);
+              brick_count++;
+              game_stat = CHASSIS_STATE_2;
               break;
             case CHASSIS_STATE_10:
-              // 机械臂放置物块函数
+              // 底盘从绿色终点前丁字路口出发返回资源岛
+              ChassisSpeed_Set(0,-v2);
+              My_mDelay(l7/v2);
+              ChassisSpeed_Set(v2,0);
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+              game_stat = CHASSIS_STATE_9;
               break;
             case CHASSIS_STATE_11:
-              // 从
+              // 底盘从蓝色终点前丁字路口出发返回资源岛
+              ChassisSpeed_Set(0,-v2);
+              My_mDelay(l7*2/v2);
+              ChassisSpeed_Set(v2,0);
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+              game_stat = CHASSIS_STATE_9;
+              break;
               break;
             default:
               break;
