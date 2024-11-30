@@ -302,10 +302,10 @@ robot_chassis_state game_stat, last_game_stat; // game的状态和上次状态
 float v1 = 100, v2 = 200, v3 = 300; // 三挡速度
 uint8_t brick_count; // 已经夹取物块数量
 float l1 = 800, // 启动区到资源岛
-      l2 = 350, // 资源岛到第一个丁字路口
-      l3 = 320, // 避障左右移动距离
+      l2 = 250, // 资源岛到第一个丁字路口
+      l3 = 400, // 避障左右移动距离
       l4 = 200, // 车前进方向碰线后进行T字修正前移动量
-      l5 = 820, // 超车障碍块前后移动距离
+      l5 = 1100, // 超车障碍块前后移动距离
       l6 = 1200, // 从红色终点T字往回走到
       l7 = 520; //
 
@@ -483,6 +483,7 @@ void PathWrite_task(void *pvParameters)
         rccu_setmode_to_tracking();
         My_mDelay(100);
         LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
+              My_mDelay(1000);
         game_stat = CHASSIS_STATE_2;
         break;
       case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
@@ -518,12 +519,12 @@ void PathWrite_task(void *pvParameters)
         LineTracker_WaitCarToStop();
         game_stat = CHASSIS_STATE_6;
         break;
-      case CHASSIS_STATE_5:
+      case CHASSIS_STATE_5:  // 底盘绿色终点走向红色终点前丁字路口并在位修正
         ChassisSpeed_Set(-v2, 0);
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
         My_mDelay(1000);
         game_stat = CHASSIS_STATE_8;
         break;
@@ -542,7 +543,7 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l4 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
         My_mDelay(1000);
         if(color_now == color_red)
         {
@@ -557,12 +558,12 @@ void PathWrite_task(void *pvParameters)
           game_stat = CHASSIS_STATE_7;
         }
         break;
-      case CHASSIS_STATE_7:
+      case CHASSIS_STATE_7:  // 底盘绿色终点走向蓝色终点前丁字路口并在位修正
         ChassisSpeed_Set(v2, 0);
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
         My_mDelay(1000);
         game_stat = CHASSIS_STATE_8;
         break;
