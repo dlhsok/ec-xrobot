@@ -275,12 +275,6 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
 /* Exported functions --------------------------------------------------------*/
 
 
-
-uint8_t time_cnt = 0, Line_Count = 0;;
-uint8_t Line_ScanNum = 0;
-int stack_free, stack_percentage;
-int count_test = 10;
-
 typedef enum
 {
   CHASSIS_STATE_STOP = 0,  // ֹͣ
@@ -294,6 +288,12 @@ typedef enum
   CHASSIS_STATE_8,
 
 } robot_chassis_state;
+
+uint8_t time_cnt = 0, Line_Count = 0;;
+uint8_t Line_ScanNum = 0;
+int stack_free, stack_percentage;
+int count_test = 10;
+robot_chassis_state game_stat, last_game_stat;
 
 void buzz_note_state_delay_100ms_begin()
 {
