@@ -14,17 +14,17 @@
 //控制频率_hz
 #define CONTROL_FREQ_HZ			  (100)
 //YAW PID参数
-#define De_YAW_KP                 1.0f
-#define De_YAW_KI                 0.0f
+#define De_YAW_KP                 2.0f
+#define De_YAW_KI                 0.01f
 #define De_YAW_KD                 0.0f
 //X PID参数
-#define De_LOCX_KP                3.0f
-#define De_LOCX_KI                0.0f
-#define De_LOCX_KD                1.0f
+#define De_LOCX_KP                4.5f
+#define De_LOCX_KI                0.1f
+#define De_LOCX_KD                3.0f
 //Y PID参数
-#define De_LOCY_KP                3.0f
-#define De_LOCY_KI                0.0f
-#define De_LOCY_KD                1.0f
+#define De_LOCY_KP                4.5f
+#define De_LOCY_KI                0.1f
+#define De_LOCY_KD                3.0f
 /* Private types -------------------------------------------------------------*/
 typedef enum
 {
@@ -93,6 +93,7 @@ static void rccu_setmode( RCCUStruct_TypeDef *rccu_handle, ChassisCtrlMode_TypeD
 static float Read_RealYawAngle( RCCUStruct_TypeDef* rccu_handle )
 {
   return (*rccu_handle->qGyro_YawAngle_New);
+//  return (rccu_handle->chassis_struct.position.angle_deg);
 }
 static float Read_GyroYawAngleCalc( RCCUStruct_TypeDef* rccu_handle )
 {
@@ -100,13 +101,18 @@ static float Read_GyroYawAngleCalc( RCCUStruct_TypeDef* rccu_handle )
   float YawAngleCalc;
 
   YawAngleCalc = Read_RealYawAngle(rccu_handle) - rccu_handle->Gyro_YawAngle_zero;
-  if(YawAngleCalc < 0)
-    YawAngleCalc += 360;
-  if(YawAngleCalc > 360)
-    YawAngleCalc -= 360;
+//  if(YawAngleCalc < 0)
+//    YawAngleCalc += 360;
+//  if(YawAngleCalc > 360)
+//    YawAngleCalc -= 360;
 
   return YawAngleCalc;
 }
+static void rccu_set_gyro_offset_to_current(void)
+{
+  rccu_struct.Gyro_YawAngle_zero = Read_RealYawAngle(&rccu_struct);
+}
+
 static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
 {
   //小车底盘控制
@@ -242,17 +248,41 @@ static void rccu_chassisctrl_normalmode( RCCUStruct_TypeDef* rccu_handle )
   rccu_handle->chassis_struct.gimbal_yaw_ecd_angle = 0;
   rccu_handle->chassis_struct.vx = sRemoteCtrl_Info.sPosition.vx;
   rccu_handle->chassis_struct.vy = sRemoteCtrl_Info.sPosition.vy;
+  
+    rt_kprintf(
+    "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+    (int)(rccu_handle->chassis_struct.vx * 1000),
+    (int)(rccu_handle->chassis_struct.vy * 1000),
+    (int)(rccu_handle->chassis_struct.vw * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[0] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[1] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[2] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[3] * 1000),
+    (int)(rccu_handle->chassis_struct.position.position_x_mm * 1000),
+    (int)(rccu_handle->chassis_struct.position.position_y_mm * 1000),
+    (int)(rccu_handle->chassis_struct.position.angle_deg * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_x * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_y * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_yaw * 1000),      
+    (int)(rccu_handle->chassis_struct.position.total_ecd[0]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[1]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[2]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[3]* 1000)
+
+  );
+  
 }
 #endif
 static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
 {
   float YawAngle_Diff;
 
+//  YawAngle_Diff = rccu_handle->chassis_struct.position.angle_deg - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
   YawAngle_Diff = rccu_handle->Gyro_YawAngle_Calc - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
-  while(YawAngle_Diff < -180)
-    YawAngle_Diff += 360;
-  while(YawAngle_Diff > 180)
-    YawAngle_Diff -= 360;
+//  while(YawAngle_Diff < -180)
+//    YawAngle_Diff += 360;
+//  while(YawAngle_Diff > 180)
+//    YawAngle_Diff -= 360;
 
   rccu_handle->chassis_struct.vw = rccu_handle->YawAngle_pid.f_pid_calc( &rccu_handle->YawAngle_pid, YawAngle_Diff, 0 );
   rccu_handle->chassis_struct.vx = rccu_handle->LocationX_pid.f_pid_calc( &rccu_handle->LocationX_pid, \
@@ -263,12 +293,34 @@ static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
                                    rccu_handle->chassis_struct.position.position_y_mm, \
                                    rccu_handle->ChassisCoord_CtrlStruct.soft_y );
 
+  rt_kprintf(
+    "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+    (int)(rccu_handle->chassis_struct.vx * 1000),
+    (int)(rccu_handle->chassis_struct.vy * 1000),
+    (int)(rccu_handle->chassis_struct.vw * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[0] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[1] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[2] * 1000),
+    (int)(rccu_handle->chassis_struct.wheel_rpm[3] * 1000),
+    (int)(rccu_handle->chassis_struct.position.position_x_mm * 1000),
+    (int)(rccu_handle->chassis_struct.position.position_y_mm * 1000),
+    (int)(rccu_handle->chassis_struct.position.angle_deg * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_x * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_y * 1000),
+    (int)(rccu_handle->ChassisCoord_CtrlStruct.soft_yaw * 1000),      
+    (int)(rccu_handle->chassis_struct.position.total_ecd[0]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[1]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[2]* 1000),
+    (int)(rccu_handle->chassis_struct.position.total_ecd[3]* 1000)
+
+  );
+
   /************************************方向计算********************************************/
   YawAngle_Diff = rccu_handle->Gyro_YawAngle_Coord - rccu_handle->Gyro_YawAngle_Calc;
-  if(YawAngle_Diff < 0)
-    YawAngle_Diff += 360;
-  if(YawAngle_Diff > 360)
-    YawAngle_Diff -= 360;
+//  if(YawAngle_Diff < 0)
+//    YawAngle_Diff += 360;
+//  if(YawAngle_Diff > 360)
+//    YawAngle_Diff -= 360;
   rccu_handle->chassis_struct.gimbal_yaw_ecd_angle = YawAngle_Diff;
 }
 static void rccu_chassisctrl_trackingmode( RCCUStruct_TypeDef* rccu_handle )
@@ -295,13 +347,13 @@ static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
                 RC_CHASSIS_MAX_SPEED_R,   //最大中心旋转轴速度
                 MAX_WHEEL_RPM );          //轮子最大速度
   //YAW PID
-  PID_struct_init(&rccu_handle->YawAngle_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_R, 100.0f, De_YAW_KP, De_YAW_KI, De_YAW_KD);
+  PID_struct_init(&rccu_handle->YawAngle_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_R, 3.0f, De_YAW_KP, De_YAW_KI, De_YAW_KD);
   rccu_handle->YawAngle_pid.output_deadband = 0;
   //X PID
-  PID_struct_init(&rccu_handle->LocationX_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_X, 100.0f, De_LOCX_KP, De_LOCX_KI, De_LOCX_KD);
+  PID_struct_init(&rccu_handle->LocationX_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_X, 10.0f, De_LOCX_KP, De_LOCX_KI, De_LOCX_KD);
   rccu_handle->LocationX_pid.output_deadband = 0;
   //Y PID
-  PID_struct_init(&rccu_handle->LocationY_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_Y, 100.0f, De_LOCY_KP, De_LOCY_KI, De_LOCY_KD);
+  PID_struct_init(&rccu_handle->LocationY_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_Y, 10.0f, De_LOCY_KP, De_LOCY_KI, De_LOCY_KD);
   rccu_handle->LocationY_pid.output_deadband = 0;
   //YAW 跟随器
   Location_Tracker_Init( &rccu_handle->ChassisCoord_CtrlStruct.Yaw_Tracker_Struct,
@@ -468,6 +520,10 @@ int32_t Read_Position_x_mm(void)
 int32_t Read_Position_y_mm(void)
 {
   return rccu_struct.chassis_struct.position.position_y_mm;
+}
+int32_t Read_Angle_deg(void)
+{
+  return rccu_struct.chassis_struct.position.angle_deg;
 }
 void rccu_task(void *pvParameters)
 {

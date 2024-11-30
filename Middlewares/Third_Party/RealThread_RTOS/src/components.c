@@ -137,8 +137,7 @@ int rtthread_startup(void);
 #if defined(__CC_ARM) || defined(__CLANG_ARM)
 extern int $Super$$main(void);
 /* re-define main function */
-int $Sub$$main(void)
-{
+int $Sub$$main(void){
     rtthread_startup();
     return 0;
 }

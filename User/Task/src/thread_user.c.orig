@@ -279,6 +279,38 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
 uint8_t time_cnt = 0, Line_Count = 0;;
 uint8_t Line_ScanNum = 0;
 int stack_free, stack_percentage;
+int count_test = 10;
+
+typedef enum
+{
+  CHASSIS_STATE_STOP = 0,  // 停止
+  CHASSIS_STATE_1,         // 从启动区COORD到资源岛
+  CHASSIS_STATE_2,         // 从资源岛
+  CHASSIS_STATE_3,
+  CHASSIS_STATE_4,
+  CHASSIS_STATE_5,
+  CHASSIS_STATE_6,
+  CHASSIS_STATE_7,
+  CHASSIS_STATE_8,
+
+} robot_chassis_state;
+
+void buzz_note_state_delay_100ms_begin()
+{
+  buzzerSound(M1);
+  My_mDelay(50);
+  buzzerSound(M5);
+  My_mDelay(50);
+  buzzerSound(0);
+}
+void buzz_note_state_delay_100ms_end()
+{
+  buzzerSound(M5);
+  My_mDelay(50);
+  buzzerSound(M1);
+  My_mDelay(50);
+  buzzerSound(0);
+}
 void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
@@ -348,10 +380,73 @@ void PathWrite_task(void *pvParameters)
 //  IdentifyBrick_Get(BrickData_Struct.x, BrickData_Struct.y);
 
     /* LINE TRACKING TEST*/
+//    rccu_setmode_to_tracking();
+////    My_mDelay(50);
+//		LineTracker_Execute_Condition(CarDirection_Head, 100, FindHead_Obstacle, 1, 0);
+//		LineTracker_WaitCarToStop();
+//		My_mDelay(50);
+
+//			rccu_setmode_to_coord();
+//		while(count_test--){
+//      buzz_note_state_delay_100ms_begin();
+//			ChassisCoord_Set(300,0,90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(0,300,-90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(-300,0,90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(0,-300,-90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//		}
+
+
+//    buzz_note_state_delay_100ms_begin();
+//    rccu_setmode_to_coord();
+//    My_mDelay(100);
+
+//    ChassisCoord_Set(0, 50000, 0);
+//    ChassisCoord_WaitStop();
+//    buzz_note_state_delay_100ms_end();
+My_mDelay(250);
+		ChassisSpeed_Set( 0, 300);
+    My_mDelay(2500);
+//		ChassisSpeed_Set( 0, 200);
+//    My_mDelay(200);
+//		ChassisSpeed_Set( 0, 300);
+//    My_mDelay(1000);
+//		ChassisSpeed_Set( 0, 200);
+//    My_mDelay(200);
+//		ChassisSpeed_Set( 0, 100);
+//    My_mDelay(200);
+
+    buzz_note_state_delay_100ms_begin();
     rccu_setmode_to_tracking();
-    My_mDelay(50);
-    LineTracker_Execute_Condition(CarDirection_Right, 100, FindEnd_Left, 1, 0);
-//		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
+    My_mDelay(100);
+
+
+//		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Head, 1, 0);
+//		LineTracker_WaitCarToStop();
+//    LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Head, 1, 1);
+
+
+    LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
+    LineTracker_WaitCarToStop();
+    buzz_note_state_delay_100ms_end();
+
+//		while(1){
+
+//			LineTracker_Execute_SituAdjust_T_Line(CarDirection_Left, 0, 1000);
+//			count_test++;
+//			LineTracker_CorrectiveCtrl_T_Line(LineTracker_Struct.pSignal2, LineTracker_Struct.pSignal1, LineTracker_Struct.pSignal4);
+//			LineTracker_ChassisPostureCalc_T_Line(LineTracker_Struct.pSignal2, LineTracker_Struct.pSignal1, LineTracker_Struct.pSignal4);
+//      My_mDelay(50);
+//		}
+
+
 
     while( (KEY_4() == 0) || (lcd_page != 1))
     {
@@ -924,63 +1019,6 @@ void RobotArmDown(uint8_t color)   // 堆料区0：左  1：中  2：右
 }
 
 // BITWISE 扫描方式，可能会误判
-//uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
-//{
-//  *Count = 0;
-//  uint8_t Line_ScanNum = 1;
-//  switch (Car_Direction)
-//  {
-//  case CarDirection_Head:
-//    if(LineTracker_Struct.pSignal1->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-//    if(LineTracker_Struct.pSignal1->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-//    if(LineTracker_Struct.pSignal1->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-//    if(LineTracker_Struct.pSignal1->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-//    if(LineTracker_Struct.pSignal1->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-//    if(LineTracker_Struct.pSignal1->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-//    if(LineTracker_Struct.pSignal1->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-//    if(LineTracker_Struct.pSignal1->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-//    break;
-//  case CarDirection_Tail:
-//    if(LineTracker_Struct.pSignal3->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-//    if(LineTracker_Struct.pSignal3->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-//    if(LineTracker_Struct.pSignal3->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-//    if(LineTracker_Struct.pSignal3->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-//    if(LineTracker_Struct.pSignal3->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-//    if(LineTracker_Struct.pSignal3->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-//    if(LineTracker_Struct.pSignal3->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-//    if(LineTracker_Struct.pSignal3->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-//    break;
-//  case CarDirection_Left:
-//    if(LineTracker_Struct.pSignal2->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-//    if(LineTracker_Struct.pSignal2->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-//    if(LineTracker_Struct.pSignal2->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-//    if(LineTracker_Struct.pSignal2->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-//    if(LineTracker_Struct.pSignal2->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-//    if(LineTracker_Struct.pSignal2->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-//    if(LineTracker_Struct.pSignal2->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-//    if(LineTracker_Struct.pSignal2->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-//    break;
-//  case CarDirection_Right:
-//    if(LineTracker_Struct.pSignal4->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-//    if(LineTracker_Struct.pSignal4->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-//    if(LineTracker_Struct.pSignal4->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-//    if(LineTracker_Struct.pSignal4->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-//    if(LineTracker_Struct.pSignal4->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-//    if(LineTracker_Struct.pSignal4->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-//    if(LineTracker_Struct.pSignal4->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-//    if(LineTracker_Struct.pSignal4->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-//    break;
-//  default:
-//    break;
-//  }
-//  for(int i = 0; i < 8; i++)
-//  {
-//    if(Line_ScanNum & (1 << i))  (*Count)++;
-//  }
-//  if(Line_ScanNum == 1) return 0;
-//  return Line_ScanNum;
-//}
-
 uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
 {
   *Count = 0;
@@ -998,14 +1036,14 @@ uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
     if(LineTracker_Struct.pSignal1->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
     break;
   case CarDirection_Tail:
-    if(LineTracker_Struct.pSignal3->adc_byte[0] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[1] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[2] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[3] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[4] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[5] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[6] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
-        if(LineTracker_Struct.pSignal3->adc_byte[7] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal3->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal3->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
+    if(LineTracker_Struct.pSignal3->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
+    if(LineTracker_Struct.pSignal3->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
+    if(LineTracker_Struct.pSignal3->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
+    if(LineTracker_Struct.pSignal3->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
+    if(LineTracker_Struct.pSignal3->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
+    if(LineTracker_Struct.pSignal3->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
     break;
   case CarDirection_Left:
     if(LineTracker_Struct.pSignal2->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
@@ -1037,6 +1075,63 @@ uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
   if(Line_ScanNum == 1) return 0;
   return Line_ScanNum;
 }
+
+//uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
+//{
+//  *Count = 0;
+//  uint8_t Line_ScanNum = 1;
+//  switch (Car_Direction)
+//  {
+//  case CarDirection_Head:
+//    if(LineTracker_Struct.pSignal1->adc_byte[0] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
+//    if(LineTracker_Struct.pSignal1->adc_byte[1] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 1;
+//    if(LineTracker_Struct.pSignal1->adc_byte[2] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 2;
+//    if(LineTracker_Struct.pSignal1->adc_byte[3] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 3;
+//    if(LineTracker_Struct.pSignal1->adc_byte[4] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 4;
+//    if(LineTracker_Struct.pSignal1->adc_byte[5] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 5;
+//    if(LineTracker_Struct.pSignal1->adc_byte[6] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 6;
+//    if(LineTracker_Struct.pSignal1->adc_byte[7] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 7;
+//    break;
+//  case CarDirection_Tail:
+//    if(LineTracker_Struct.pSignal3->adc_byte[0] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
+//    if(LineTracker_Struct.pSignal3->adc_byte[1] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 1;
+//    if(LineTracker_Struct.pSignal3->adc_byte[2] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 2;
+//    if(LineTracker_Struct.pSignal3->adc_byte[3] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 3;
+//    if(LineTracker_Struct.pSignal3->adc_byte[4] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 4;
+//    if(LineTracker_Struct.pSignal3->adc_byte[5] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 5;
+//    if(LineTracker_Struct.pSignal3->adc_byte[6] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 6;
+//    if(LineTracker_Struct.pSignal3->adc_byte[7] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 7;
+//    break;
+//  case CarDirection_Left:
+//    if(LineTracker_Struct.pSignal2->adc_byte[0] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
+//    if(LineTracker_Struct.pSignal2->adc_byte[1] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 1;
+//    if(LineTracker_Struct.pSignal2->adc_byte[2] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 2;
+//    if(LineTracker_Struct.pSignal2->adc_byte[3] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 3;
+//    if(LineTracker_Struct.pSignal2->adc_byte[4] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 4;
+//    if(LineTracker_Struct.pSignal2->adc_byte[5] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 5;
+//    if(LineTracker_Struct.pSignal2->adc_byte[6] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 6;
+//    if(LineTracker_Struct.pSignal2->adc_byte[7] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 7;
+//    break;
+//  case CarDirection_Right:
+//    if(LineTracker_Struct.pSignal4->adc_byte[0] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 0;
+//    if(LineTracker_Struct.pSignal4->adc_byte[1] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 1;
+//    if(LineTracker_Struct.pSignal4->adc_byte[2] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 2;
+//    if(LineTracker_Struct.pSignal4->adc_byte[3] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 3;
+//    if(LineTracker_Struct.pSignal4->adc_byte[4] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 4;
+//    if(LineTracker_Struct.pSignal4->adc_byte[5] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 5;
+//    if(LineTracker_Struct.pSignal4->adc_byte[6] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 6;
+//    if(LineTracker_Struct.pSignal4->adc_byte[7] >= LINETRACKER_ADC_THRESHOLD) Line_ScanNum |= 1 << 7;
+//    break;
+//  default:
+//    break;
+//  }
+//  for(int i = 0; i < 8; i++)
+//  {
+//    if(Line_ScanNum & (1 << i))  (*Count)++;
+//  }
+//  if(Line_ScanNum == 1) return 0;
+//  return Line_ScanNum;
+//}
 
 /****************************
 Car_direction:行进方向

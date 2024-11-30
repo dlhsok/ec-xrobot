@@ -20,7 +20,7 @@ LineTracker_TypeDef LineTracker_Struct;
 void LineTracker_CorrectiveCtrl(CorrectiveMode_e mode);
 static float LineTracker_DistanceCalc(SignalDef_u *pSignal)
 {
-  float Distance;
+  float Distance = 7;
   uint8_t num;
 
   num = 0;

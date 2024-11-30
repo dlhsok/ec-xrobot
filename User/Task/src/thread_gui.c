@@ -207,13 +207,13 @@ static void Display_Window_StartPage(void)
   time_cnt++;
   //RobotArmData_Struct.SCARA_Cartesian[0]
   if(time_cnt == 1)
-    lcd_show_snum(10, 2, 12, ReadSpeedValue[0], 5, 0);
+    lcd_show_snum(20, 2, 12, ReadSpeedValue[0], 8, 0);
   else if(time_cnt == 7)
-    lcd_show_snum(10, 18, 12, ReadSpeedValue[1], 5, 0);
+    lcd_show_snum(20, 18, 12, ReadSpeedValue[1], 8, 0);
   else if(time_cnt == 14)
-    lcd_show_snum(10, 34, 12, ReadSpeedValue[2], 5, 0);
+    lcd_show_snum(20, 34, 12, ReadSpeedValue[2], 8, 0);
   else if(time_cnt == 21)
-    lcd_show_snum(10, 50, 12, ReadSpeedValue[3], 5, 0);
+    lcd_show_snum(20, 50, 12, ReadSpeedValue[3], 8, 0);
 //	if(time_cnt == 1)
 //        lcd_show_snum(10,2,12,BrickData_Struct.x,5,0);
 //	else if(time_cnt == 7)
@@ -222,8 +222,12 @@ static void Display_Window_StartPage(void)
 //		lcd_show_snum(10,34,12,BrickData_Struct.yaw,5,0);
   else if(time_cnt == 28)
   {
-    lcd_show_snum(10, 66, 12, Read_Position_x_mm(), 5, 0);
-    lcd_show_snum(10, 82, 12, Read_Position_y_mm(), 5, 0);
+    lcd_show_snum(20, 66, 12, Read_Position_x_mm(), 8, 0);
+    lcd_show_snum(20, 82, 12, Read_Position_y_mm(), 8, 0);
+  }
+  else if(time_cnt == 35)
+  {
+    lcd_show_snum(20, 98, 12, Read_Angle_deg(), 8, 0);
     time_cnt = 0;
   }
 }

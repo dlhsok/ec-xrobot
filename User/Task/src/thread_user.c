@@ -280,6 +280,37 @@ uint8_t time_cnt = 0, Line_Count = 0;;
 uint8_t Line_ScanNum = 0;
 int stack_free, stack_percentage;
 int count_test = 10;
+
+typedef enum
+{
+  CHASSIS_STATE_STOP = 0,  // 停止
+  CHASSIS_STATE_1,         // 从启动区COORD到资源岛
+  CHASSIS_STATE_2,         // 从资源岛
+  CHASSIS_STATE_3,
+  CHASSIS_STATE_4,
+  CHASSIS_STATE_5,
+  CHASSIS_STATE_6,
+  CHASSIS_STATE_7,
+  CHASSIS_STATE_8,
+
+} robot_chassis_state;
+
+void buzz_note_state_delay_100ms_begin()
+{
+  buzzerSound(M1);
+  My_mDelay(50);
+  buzzerSound(M5);
+  My_mDelay(50);
+  buzzerSound(0);
+}
+void buzz_note_state_delay_100ms_end()
+{
+  buzzerSound(M5);
+  My_mDelay(50);
+  buzzerSound(M1);
+  My_mDelay(50);
+  buzzerSound(0);
+}
 void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
@@ -355,29 +386,59 @@ void PathWrite_task(void *pvParameters)
 //		LineTracker_WaitCarToStop();
 //		My_mDelay(50);
 
-			rccu_setmode_to_coord();
-		while(count_test--){
-			ChassisCoord_Set(300,0,0);
+//			rccu_setmode_to_coord();
+//		while(count_test--){
+//      buzz_note_state_delay_100ms_begin();
+//			ChassisCoord_Set(300,0,90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(0,300,-90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(-300,0,90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//			ChassisCoord_Set(0,-300,-90);
+//			ChassisCoord_WaitStop();
+//			My_mDelay(1000);
+//		}
 
-				
-			ChassisCoord_WaitStop();
-			My_mDelay(1000);
-			ChassisCoord_Set(0,300,0);
-			ChassisCoord_WaitStop();
-			My_mDelay(1000);
-			ChassisCoord_Set(-300,0,0);
-			ChassisCoord_WaitStop();
-			My_mDelay(1000);
-			ChassisCoord_Set(0,-300,0);
-			ChassisCoord_WaitStop();
-			My_mDelay(1000);
-		}
-		
-//		rccu_setmode_to_tracking();
+
+//    buzz_note_state_delay_100ms_begin();
+//    rccu_setmode_to_coord();
+//    My_mDelay(100);
+
+//    ChassisCoord_Set(0, 50000, 0);
+//    ChassisCoord_WaitStop();
+//    buzz_note_state_delay_100ms_end();
+    buzz_note_state_delay_100ms_begin();
+    My_mDelay(250);
+    ChassisSpeed_Set( 0, 300);
+    My_mDelay(2500);
+        buzz_note_state_delay_100ms_end();
+//		ChassisSpeed_Set( 0, 200);
+//    My_mDelay(200);
+//		ChassisSpeed_Set( 0, 300);
+//    My_mDelay(1000);
+//		ChassisSpeed_Set( 0, 200);
+//    My_mDelay(200);
+//		ChassisSpeed_Set( 0, 100);
+//    My_mDelay(200);
+
+    buzz_note_state_delay_100ms_begin();
+    rccu_setmode_to_tracking();
+    My_mDelay(100);
+
+
 //		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Head, 1, 0);
 //		LineTracker_WaitCarToStop();
 //    LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Head, 1, 1);
-//		LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
+
+
+    LineTracker_Execute_Condition(CarDirection_Head, 100, FindEnd_Tail, 1, 1);
+    LineTracker_WaitCarToStop();
+    buzz_note_state_delay_100ms_end();
+
 //		while(1){
 
 //			LineTracker_Execute_SituAdjust_T_Line(CarDirection_Left, 0, 1000);
@@ -386,6 +447,9 @@ void PathWrite_task(void *pvParameters)
 //			LineTracker_ChassisPostureCalc_T_Line(LineTracker_Struct.pSignal2, LineTracker_Struct.pSignal1, LineTracker_Struct.pSignal4);
 //      My_mDelay(50);
 //		}
+
+
+
     while( (KEY_4() == 0) || (lcd_page != 1))
     {
       My_mDelay(50);

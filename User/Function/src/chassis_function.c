@@ -118,13 +118,13 @@ static void Mecanum_Calculate_ForwardTransform( ChassisHandle_TypeDef* chassis_h
 
   position_x += diff_d_x * cos(mecanum_angle) - diff_d_y * sin(mecanum_angle);
   position_y += diff_d_x * sin(mecanum_angle) + diff_d_y * cos(mecanum_angle);
-//  angle_w += diff_d_w;
-	angle_w += diff_mecanum_angle;
+  angle_w += diff_d_w;
+//	angle_w += diff_mecanum_angle;
 
   chassis_handle->position.position_x_mm = position_x;        //mm
   chassis_handle->position.position_y_mm = position_y;        //mm
-  chassis_handle->position.angle = angle_w;
-  chassis_handle->position.angle_deg = angle_w * RAD_TO_ANGLE; //degree
+  chassis_handle->position.angle_deg = angle_w;
+  chassis_handle->position.angle = angle_w / RAD_TO_ANGLE;
 
   v_x = ( -chassis_handle->position.speed_rpm[0] + chassis_handle->position.speed_rpm[1] - chassis_handle->position.speed_rpm[2] + chassis_handle->position.speed_rpm[3] ) / ((double)chassis_handle->wheel_rpm_ratio * 4.0);
   v_y = ( chassis_handle->position.speed_rpm[0] + chassis_handle->position.speed_rpm[1] + chassis_handle->position.speed_rpm[2] + chassis_handle->position.speed_rpm[3] ) / ((double)chassis_handle->wheel_rpm_ratio * 4.0);
@@ -135,7 +135,7 @@ static void Mecanum_Calculate_ForwardTransform( ChassisHandle_TypeDef* chassis_h
 
   chassis_handle->position.v_x_mm = v_x;                 //mm/s
   chassis_handle->position.v_y_mm = v_y;                 //mm/s
-  chassis_handle->position.rate_deg = v_w * RAD_TO_ANGLE; //degree/s
+  chassis_handle->position.rate_deg = v_w; //degree/s
 
 }
 static void Mecanum_Chassis_ControlCalc(ChassisHandle_TypeDef* chassis_handle)

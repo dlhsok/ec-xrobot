@@ -25,6 +25,7 @@ void ServoSetPluseAndTime(uint8_t mode, uint16_t pwmval,uint16_t time);
 void ChassisSpeed_Set(float _x_spd, float _y_spd);
 int32_t Read_Position_x_mm(void);
 int32_t Read_Position_y_mm(void);
+int32_t Read_Angle_deg(void);
 void rccu_setmode_to_tracking( void );
 void rccu_setmode_to_coord( void );
 void rccu_setmode_to_normal( void );
