@@ -101,10 +101,10 @@ static float Read_GyroYawAngleCalc( RCCUStruct_TypeDef* rccu_handle )
   float YawAngleCalc;
 
   YawAngleCalc = Read_RealYawAngle(rccu_handle) - rccu_handle->Gyro_YawAngle_zero;
-//  if(YawAngleCalc < 0)
-//    YawAngleCalc += 360;
-//  if(YawAngleCalc > 360)
-//    YawAngleCalc -= 360;
+  if(YawAngleCalc < 0)
+    YawAngleCalc += 360;
+  if(YawAngleCalc > 360)
+    YawAngleCalc -= 360;
 
   return YawAngleCalc;
 }
@@ -279,10 +279,10 @@ static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
 
 //  YawAngle_Diff = rccu_handle->chassis_struct.position.angle_deg - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
   YawAngle_Diff = rccu_handle->Gyro_YawAngle_Calc - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
-//  while(YawAngle_Diff < -180)
-//    YawAngle_Diff += 360;
-//  while(YawAngle_Diff > 180)
-//    YawAngle_Diff -= 360;
+  while(YawAngle_Diff < -180)
+    YawAngle_Diff += 360;
+  while(YawAngle_Diff > 180)
+    YawAngle_Diff -= 360;
 
   rccu_handle->chassis_struct.vw = rccu_handle->YawAngle_pid.f_pid_calc( &rccu_handle->YawAngle_pid, YawAngle_Diff, 0 );
   rccu_handle->chassis_struct.vx = rccu_handle->LocationX_pid.f_pid_calc( &rccu_handle->LocationX_pid, \
@@ -317,10 +317,10 @@ static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
 
   /************************************·½Ïò¼ÆËã********************************************/
   YawAngle_Diff = rccu_handle->Gyro_YawAngle_Coord - rccu_handle->Gyro_YawAngle_Calc;
-//  if(YawAngle_Diff < 0)
-//    YawAngle_Diff += 360;
-//  if(YawAngle_Diff > 360)
-//    YawAngle_Diff -= 360;
+  if(YawAngle_Diff < 0)
+    YawAngle_Diff += 360;
+  if(YawAngle_Diff > 360)
+    YawAngle_Diff -= 360;
   rccu_handle->chassis_struct.gimbal_yaw_ecd_angle = YawAngle_Diff;
 }
 static void rccu_chassisctrl_trackingmode( RCCUStruct_TypeDef* rccu_handle )
