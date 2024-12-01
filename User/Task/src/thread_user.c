@@ -278,7 +278,7 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
 
 typedef enum
 {
-  CHASSIS_STATE_STOP = 0,  // 底盘机械臂停止
+  CHASSIS_STATE_0 = 0,  // 底盘机械臂停止
   CHASSIS_STATE_1,         // 底盘从启动区到资源岛
   CHASSIS_STATE_2,         // 机械臂从资源岛夹取物块
   CHASSIS_STATE_3,         // 底盘从资源岛到第一个丁字路口并在位修正
@@ -330,7 +330,7 @@ void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
   // 上电后复位机械臂
-  RobotArm_Rst();
+//  RobotArm_Rst();
   // 停止视觉模块
   RecognitionModule_Stop(&RecognitionModule_t);
 
@@ -348,7 +348,7 @@ void PathWrite_task(void *pvParameters)
   while( (KEY_4() == 0) || (lcd_page != 1))
     My_mDelay(10);
 
-  game_stat = CHASSIS_STATE_1;
+  game_stat = CHASSIS_STATE_0;
 
 #if 1 //
   while(1)
@@ -464,18 +464,21 @@ void PathWrite_task(void *pvParameters)
 //		}
 //              rccu_setmode_to_tracking();
 //              My_mDelay(100);
-//              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 5000);
-//              while(1)
-//              {
-//                My_mDelay(100);
-//              }
+//              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 5000);         
+Recognition_Start();
+
+              while(1)
+              {
+								         Rotation_Claw(BrickData_Struct.yaw);
+                My_mDelay(100);
+              }
       while (1)
         {
           last_game_stat = game_stat;
           buzz_note_state_delay_100ms_begin();
           switch(game_stat)
             {
-            case CHASSIS_STATE_STOP:  // 底盘机械臂停止
+            case CHASSIS_STATE_0:  // 底盘机械臂停止
               break;
             case CHASSIS_STATE_1:  // 底盘从启动区到资源岛
               ChassisSpeed_Set(v2, 0);
