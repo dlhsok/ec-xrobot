@@ -609,10 +609,14 @@ void PathWrite_task(void *pvParameters)
               rccu_setmode_to_tracking();
               My_mDelay(100);
               LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-              My_mDelay(1000);
+
               ChassisSpeed_Set(v2, 0);
               My_mDelay(1000 * l2 / v2);
               brick_count++;
+              rccu_setmode_to_tracking();
+              My_mDelay(100);
+              LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
+              My_mDelay(1000);
               game_stat = CHASSIS_STATE_2;
               break;
             case CHASSIS_STATE_11:
