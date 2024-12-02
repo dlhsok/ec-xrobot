@@ -1,5 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "thread_user.h"
+#include "math.h"
 /* 开发板数据文件 */
 #include "data.h"
 /* 其他任务头文件 */
@@ -661,7 +662,24 @@ Recognition_Start();
       Debug_Await();
     }
 #endif
-
+    float theta,phi,delta,epsilon;
+		float T_CAM_ARM[3][3];//相机坐标系向机械臂坐标系的坐标变换矩阵
+		float P_CAM_ARM[2];//机械臂坐标系原点和相机坐标系原点连线向量
+		phi=atan(RobotArmData_Struct.SCARA_Cartesian[0]/RobotArmData_Struct.SCARA_Cartesian[1])-epsilon;
+		theta=phi-delta;
+		float R[3][3]={{cos(theta),-sin(theta),0},{sin(theta),cos(theta),0},{0,0,1}};//旋转矩阵
+		float T[3][3]={{0,0,-P_CAM_ARM[0]},{0,0,-P_CAM_ARM[1]},{0,0,1}};
+    for (int i = 0; i < 3; i++) 
+		{  for (int j = 0; j < 3; j++) 
+			{   T_CAM_ARM[i][j] = 0; // 初始化结果矩阵的元素为0
+            for (int k = 0; k < 3; k++) 
+					{ T_CAM_ARM[i][j] += T[i][k] * R[k][j];
+            }
+        }
+    }
+		
+		
+		
 
 
 
