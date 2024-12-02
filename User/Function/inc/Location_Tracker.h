@@ -8,7 +8,16 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 /* 宏定义 --------------------------------------------------------------------*/
+#define LOCATIONTRACKER_TYPE_INT32
+//#define LOCATIONTRACKER_TYPE_FLOAT
+
+#ifdef LOCATIONTRACKER_TYPE_INT32
 #define LOCATIONTRACKER_TYPE int32_t
+#endif
+#ifdef LOCATIONTRACKER_TYPE_FLOAT
+#define LOCATIONTRACKER_TYPE float
+#endif
+
 /* 类型定义 ------------------------------------------------------------------*/
 /**
   * Location_Tracker类结构体定义

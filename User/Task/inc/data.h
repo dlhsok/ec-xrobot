@@ -73,9 +73,12 @@ extern "C" {
 #define Claw_S                  FlashData_Struct.Servo_Claw_S
 #define Claw_J                  FlashData_Struct.Servo_Claw_J
 /******************************************************************************
- *              机械臂ID设置                                             *
+ *              机械臂参数设置                                             *
  ******************************************************************************/
 #define DEVICE_ROBOTARM_ID      2
+#define DEVICE_ROBOTARM_MAX_SPEED_X      (100.0f)     //X轴方向最大速度(mm/s)
+#define DEVICE_ROBOTARM_MAX_SPEED_Y      (100.0f)     //Y轴方向最大速度(mm/s)
+#define DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO (100.0f) // 位置跟踪器放大倍数
 /******************************************************************************
  *              电机旋转方向设置                                             *
  ******************************************************************************/
@@ -108,6 +111,7 @@ typedef struct
 	int16_t x;
 	int16_t y;
 	int16_t yaw;
+	bool rec_flg; // 接受到新数据标志位
 }BrickData_TypeDef;
 typedef struct
 {

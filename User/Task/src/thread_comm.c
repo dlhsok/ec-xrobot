@@ -109,7 +109,7 @@ void ModbusInitialUsedPGs(void)
                                   FUNCTION_CODE_WRITE_HOLDREG_MULTI,            //功能码0x10 写多个保持寄存器
                                   MODBUS_PG_TX_REQ,                             //PDU运行状态
                                   MODBUS_CYCLIC,                                //PDU传输类型
-                                  100,                                          //循环速率，单位ms
+                                  10,                                          //循环速率，单位ms
                                   100,                                           //计时器
                                   0x1000,                                       //数据起始地址
                                   0x100B,                                       //数据终点地址
@@ -219,6 +219,7 @@ void XferExternalUart5Rx_Handler(char *pdata, uint16_t len)
     }
     pdat++;
     BrickData_Struct.yaw = atoi(pdat);
+		BrickData_Struct.rec_flg = true;
   }
 }
 /***********************************************************************************************
