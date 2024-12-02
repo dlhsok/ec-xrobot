@@ -319,7 +319,8 @@ float T_CAM_ARM[3][3]; // 相机坐标系向机械臂坐标系的坐标变换矩阵
 float P_CAM_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到相机坐标系原点向量（ARM系）
 float P_BRICK_CAM[3] = {0, 0, 1}; // 相机坐标系原点到物块中心点向量（CAM系）
 float P_BRICK_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到物块中心点向量（ARM系）
-float P_BRICK_CAM_OFFSET[2] = {0, 100};
+float P_BRICK_OFFSET_CAM[2] = {0, 100};
+float P_BRICK_OFFSET_ARM[2] = {0};
 
 void buzz_note_state_delay_100ms_begin()
 {
@@ -484,21 +485,24 @@ void PathWrite_task(void *pvParameters)
       My_mDelay(100);
       while(1)
         {
-          buzz_note_state_delay_100ms_begin();
-          phi = -atan2f(RobotArmData_Struct.SCARA_Cartesian[0], RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
-          theta = phi + delta;
+
 
 
           if(BrickData_Struct.rec_flg)
             {
+              buzz_note_state_delay_100ms_begin();
+          phi = atan2f(RobotArmData_Struct.SCARA_Cartesian[0], RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
+          theta = phi + delta;
               BrickData_Struct.rec_flg = false;
               P_CAM_ARM[0]=RobotArmData_Struct.SCARA_Cartesian[0];
               P_CAM_ARM[1]=RobotArmData_Struct.SCARA_Cartesian[1];
+//              P_CAM_ARM[0]=P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
+//              P_CAM_ARM[1]=P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
 
-              P_BRICK_CAM[0]=BrickData_Struct.x - P_BRICK_CAM_OFFSET[0];
-              P_BRICK_CAM[1]=BrickData_Struct.y - P_BRICK_CAM_OFFSET[1];
+              P_BRICK_CAM[0]=BrickData_Struct.x;
+              P_BRICK_CAM[1]=BrickData_Struct.y;
 
-              float R[3][3] = {{cos(theta), -sin(theta), 0}, {sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
+              float R[3][3] = {{cos(theta), sin(theta), 0}, {-sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
               float T[3][3] = {{1, 0, P_CAM_ARM[0]}, {0, 1, P_CAM_ARM[1]}, {0, 0, 1}};
 
               // 计算坐标变换矩阵T_CAM_ARM
@@ -523,7 +527,16 @@ void PathWrite_task(void *pvParameters)
                       P_BRICK_ARM[i] += T_CAM_ARM[i][j] * P_BRICK_CAM[j];
                     }
                 }
-								ArmCoord_SetAbsolute(P_BRICK_ARM[0], P_BRICK_ARM[1]);
+              // 计算P_BRICK_OFFSET_ARM = R_CAM_ARM * P_BRICK_OFFSET_CAM
+              for (int i = 0; i < 2; i++)
+                {
+                  P_BRICK_OFFSET_ARM[i] = 0;
+                  for (int j = 0; j < 2; j++)
+                    {
+                      P_BRICK_OFFSET_ARM[i] += R[i][j] * P_BRICK_OFFSET_CAM[j];
+                    }
+                }
+								ArmCoord_SetAbsolute(P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0], P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1]);
 //              RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0];
 //              RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1];
 								My_mDelay(300);
