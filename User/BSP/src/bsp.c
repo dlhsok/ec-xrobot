@@ -55,7 +55,7 @@ static int BSP_Init (void)
 INIT_BOARD_EXPORT(BSP_Init);
 static int StartingMusic(void)
 {
-  buzzerSound(L5);
+  buzzerSound(L1);
   My_mDelay(100);
 
   buzzerSound(0);
@@ -65,7 +65,7 @@ static int StartingMusic(void)
 
   buzzerSound(0);
   My_mDelay(100);
-  buzzerSound(L1);
+  buzzerSound(L5);
   My_mDelay(100);
   buzzerSound(0);
 

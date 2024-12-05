@@ -11,7 +11,7 @@
 #endif
 /* Private macros ------------------------------------------------------------*/
 //控制频率_hz
-#define CONTROL_FREQ_HZ			  (500)
+#define CONTROL_FREQ_HZ			  (100)
 /* Private types -------------------------------------------------------------*/
 //typedef enum
 //{
@@ -94,7 +94,7 @@ void arm_task(void *pvParameters)
       RobotArmData_Struct.SCARA_Cartesian[0] = 1.0f * ArmCoord_CtrlStruct.soft_x / DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO;
       RobotArmData_Struct.SCARA_Cartesian[1] = 1.0f * ArmCoord_CtrlStruct.soft_y / DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO;
 
-      My_mDelay(2);
+      My_mDelay(10);
       arm_cnt++;
     }
 }
@@ -103,6 +103,21 @@ void ArmCoord_SetAbsolute(float _x, float _y)
 {
   ArmCoord_CtrlStruct.goal_x = _x*DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO;
   ArmCoord_CtrlStruct.goal_y = _y*DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO;
+}
+
+void RobotArm_WaitStop(void)
+{
+  //等待机械臂运动停止
+  while( 
+//		ABS((ArmCoord_CtrlStruct.soft_y - ArmCoord_CtrlStruct.goal_y) > 0.2f*DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO ) || 
+//		ABS((ArmCoord_CtrlStruct.soft_x - ArmCoord_CtrlStruct.goal_x) > 0.2f*DEVICE_ROBOTARM_LOCATION_TRACKER_RATIO ) || 
+		( RobotArmData_Struct.UploadData_U.bit.Motor1_RunSta == 1 )
+  || ( RobotArmData_Struct.UploadData_U.bit.Motor2_RunSta == 1 )
+  || ( RobotArmData_Struct.UploadData_U.bit.Motor3_RunSta == 1 ) 
+	)
+    {
+      My_mDelay(10);
+    }
 }
 
 int Task_Arm_create(void)
@@ -124,4 +139,4 @@ int Task_Arm_create(void)
 }
 
 
-INIT_APP_EXPORT(Task_Arm_create);
+//INIT_APP_EXPORT(Task_Arm_create);

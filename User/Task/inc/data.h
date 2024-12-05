@@ -106,6 +106,10 @@ typedef struct
 {
 	uint8_t  DataStorage_Flg;    //数据存储标记
 }AppData_Typedef;
+
+#define BRICK_DATA_BUFF_LEN (5)
+extern int BRICK_DATA_BUFF_DELAY_INDEX;
+
 typedef struct
 {
 	int16_t x;
@@ -237,6 +241,9 @@ extern uint8_t Recognition_Buffer[Recognition_RX_LEN];
 extern uint8_t bool_recognitionflag;
 /*******砖数据声明*******/
 extern BrickData_TypeDef BrickData_Struct;
+extern BrickData_TypeDef BrickData_Struct_Buff[BRICK_DATA_BUFF_LEN]; // 砖块数据缓冲区，用于对齐时间轴
+extern int16_t brick_data_buff_pop_index; // 往回BRICK_DATA_BUFF_DELAY_INDEX对应的数据下标
+extern int16_t brick_data_buff_push_index; // 最新数据对应的数据下标
 /* Exported functions --------------------------------------------------------*/
 int AppData_Init(void);
 uint8_t Application_DataFlash_Modification(void);

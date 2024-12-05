@@ -109,7 +109,7 @@ void ModbusInitialUsedPGs(void)
                                   FUNCTION_CODE_WRITE_HOLDREG_MULTI,            //功能码0x10 写多个保持寄存器
                                   MODBUS_PG_TX_REQ,                             //PDU运行状态
                                   MODBUS_CYCLIC,                                //PDU传输类型
-                                  10,                                          //循环速率，单位ms
+                                  100,                                          //循环速率，单位ms
                                   100,                                           //计时器
                                   0x1000,                                       //数据起始地址
                                   0x100B,                                       //数据终点地址
@@ -181,6 +181,7 @@ void XferExternalUart5Rx_Handler(char *pdata, uint16_t len)
 {
   uint8_t i;
   char *pdat;
+	static uint32_t receive_count;
 
   RecognitionModule_ReceivingProcess(&RecognitionModule_t, (uint8_t*)pdata, len);
   if( RecognitionModule_t.RecognitionModuleSte == RM_succeed )
@@ -219,9 +220,27 @@ void XferExternalUart5Rx_Handler(char *pdata, uint16_t len)
     }
     pdat++;
     BrickData_Struct.yaw = atoi(pdat);
-		BrickData_Struct.rec_flg = true;
+		receive_count++;
+		if(receive_count > BRICK_DATA_BUFF_DELAY_INDEX){
+			BrickData_Struct.rec_flg = true;
+		}
+		else
+			BrickData_Struct.rec_flg = false;
+		
+		BrickData_Struct_Buff[brick_data_buff_push_index] = BrickData_Struct;
+		
+		brick_data_buff_pop_index = brick_data_buff_push_index - BRICK_DATA_BUFF_DELAY_INDEX;
+		brick_data_buff_push_index++;
+		if(brick_data_buff_pop_index < 0)
+		{
+			brick_data_buff_pop_index+=BRICK_DATA_BUFF_LEN;
+		}
+		if(brick_data_buff_push_index == BRICK_DATA_BUFF_LEN)
+			brick_data_buff_push_index = 0;
   }
 }
+
+
 /***********************************************************************************************
 
                                        应用任务函数

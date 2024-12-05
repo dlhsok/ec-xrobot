@@ -5,6 +5,7 @@
 #include "data.h"
 /* 其他任务头文件 */
 #include "thread_rccu.h"
+#include "thread_arm.h"
 #include "thread_gui.h"
 #include "chassis_LineTracker.h"
 /* Private macros ------------------------------------------------------------*/
@@ -65,16 +66,7 @@ static void Debug_Await(void)
   while( (KEY_4() == 1) || (lcd_page != 1))
     My_mDelay(50);
 }
-static void RobotArm_WaitStop(void)
-{
-  //等待机械臂运动停止
-  while( ( RobotArmData_Struct.UploadData_U.bit.Motor1_RunSta == 1 )
-  || ( RobotArmData_Struct.UploadData_U.bit.Motor2_RunSta == 1 )
-  || ( RobotArmData_Struct.UploadData_U.bit.Motor3_RunSta == 1 ) )
-    {
-      My_mDelay(10);
-    }
-}
+
 static void RobotArm_Rst(void)
 {
   while( ( RobotArmData_Struct.UploadData_U.bit.IN1 == 1 )
@@ -318,6 +310,13 @@ float T_CAM_ARM[3][3]; // 相机坐标系向机械臂坐标系的坐标变换矩阵
 float P_CAM_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到相机坐标系原点向量（ARM系）
 float P_BRICK_CAM[3] = {0, 0, 1}; // 相机坐标系原点到物块中心点向量（CAM系）
 float P_BRICK_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到物块中心点向量（ARM系）
+float P_BRICK_OFFSET_CAM[2] = {0, 55}; // 相机系里面物块要到的最终位置
+float P_BRICK_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
+float P_CLAW_OFFSET_CAM[2] = {0, 0}; // 相机系里面物块要到的最终位置
+float P_CLAW_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
+float P_CLAW_GRAB_Z = -100;
+
+float distance_xy_scale_ratio = 0.8;
 
 void buzz_note_state_delay_100ms_begin()
 {
@@ -335,6 +334,86 @@ void buzz_note_state_delay_100ms_end()
   My_mDelay(50);
   buzzerSound(0);
 }
+
+float eu(float _x, float _y)
+{
+  return sqrt(_x * _x + _y * _y);
+}
+
+void move_arm_to_brick()
+{
+
+  while(1)
+    {
+      P_BRICK_CAM[0]=P_BRICK_OFFSET_CAM[0] + (BrickData_Struct_Buff[brick_data_buff_pop_index].x - P_BRICK_OFFSET_CAM[0]) * distance_xy_scale_ratio;
+      P_BRICK_CAM[1]=P_BRICK_OFFSET_CAM[1] + (BrickData_Struct_Buff[brick_data_buff_pop_index].y - P_BRICK_OFFSET_CAM[1]) * distance_xy_scale_ratio;
+      if( ABS(P_BRICK_CAM[0] - P_BRICK_OFFSET_CAM[0]) < 0.5
+          &&  ABS(P_BRICK_CAM[1] - P_BRICK_OFFSET_CAM[1]) < 0.5 )
+        break;
+      if(BrickData_Struct.rec_flg)
+        {
+//              buzz_note_state_delay_100ms_begin();
+          phi = atan2f(RobotArmData_Struct.SCARA_Cartesian[0], RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
+          theta = phi + delta;
+          BrickData_Struct.rec_flg = false;
+          P_CAM_ARM[0]=RobotArmData_Struct.SCARA_Cartesian[0];
+          P_CAM_ARM[1]=RobotArmData_Struct.SCARA_Cartesian[1];
+//              P_CAM_ARM[0]=P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
+//              P_CAM_ARM[1]=P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
+
+
+          float R[3][3] = {{cos(theta), sin(theta), 0}, {-sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
+          float T[3][3] = {{1, 0, P_CAM_ARM[0]}, {0, 1, P_CAM_ARM[1]}, {0, 0, 1}};
+
+          // 计算坐标变换矩阵T_CAM_ARM
+          for (int i = 0; i < 3; i++)
+            {
+              for (int j = 0; j < 3; j++)
+                {
+                  T_CAM_ARM[i][j] = 0; // 初始化结果矩阵的元素为0
+                  for (int k = 0; k < 3; k++)
+                    {
+                      T_CAM_ARM[i][j] += T[i][k] * R[k][j];
+                    }
+                }
+            }
+
+          // 计算P_BRICK_ARM = T_CAM_ARM * P_BRICK_CAM
+          for (int i = 0; i < 3; i++)
+            {
+              P_BRICK_ARM[i] = 0;
+              for (int j = 0; j < 3; j++)
+                {
+                  P_BRICK_ARM[i] += T_CAM_ARM[i][j] * P_BRICK_CAM[j];
+                }
+            }
+          // 计算P_BRICK_OFFSET_ARM = R_CAM_ARM * P_BRICK_OFFSET_CAM
+          for (int i = 0; i < 2; i++)
+            {
+              P_BRICK_OFFSET_ARM[i] = 0;
+              P_CLAW_OFFSET_ARM[i] = 0;
+              for (int j = 0; j < 2; j++)
+                {
+                  P_BRICK_OFFSET_ARM[i] += R[i][j] * P_BRICK_OFFSET_CAM[j];
+                  P_CLAW_OFFSET_ARM[i] += R[i][j] * P_CLAW_OFFSET_CAM[j];
+                }
+            }
+//              ArmCoord_SetAbsolute(P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0], P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1]);
+          RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
+          RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
+//              RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0];
+//              RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1];
+          My_mDelay(500);
+          RobotArm_WaitStop();
+          My_mDelay(500);
+//								My_mDelay(300);
+          Rotation_Claw(BrickData_Struct.yaw);
+//								My_mDelay(300);
+        }
+//          My_mDelay(500);
+    }
+}
+
 void PathWrite_task(void *pvParameters)
 {
   //路劲规划任务
@@ -474,59 +553,32 @@ void PathWrite_task(void *pvParameters)
 //              rccu_setmode_to_tracking();
 //              My_mDelay(100);
 //              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 5000);
-      Recognition_Start();
+//      Recognition_Start();
       RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
       RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
-			My_mDelay(100);
-              RobotArm_WaitStop();
-							My_mDelay(100);
+      My_mDelay(1000);
+      RobotArm_WaitStop();
+      My_mDelay(1000);
+
       while(1)
         {
+					      Recognition_Start();RobotArm_WaitStop();
+      My_mDelay(1000);
+          move_arm_to_brick();
           buzz_note_state_delay_100ms_begin();
-          phi = atan2f(RobotArmData_Struct.SCARA_Cartesian[0], -RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
-          theta = phi + delta;
+					          RecognitionModule_Stop(&RecognitionModule_t);
 
 
-          if(BrickData_Struct.rec_flg)
-            {
-              BrickData_Struct.rec_flg = false;
-              P_CAM_ARM[0]=RobotArmData_Struct.SCARA_Cartesian[0];
-              P_CAM_ARM[1]=-RobotArmData_Struct.SCARA_Cartesian[1];
-
-              P_BRICK_CAM[0]=BrickData_Struct.x;
-              P_BRICK_CAM[1]=BrickData_Struct.y;
-
-              float R[3][3] = {{cos(theta), -sin(theta), 0}, {sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
-              float T[3][3] = {{1, 0, -P_CAM_ARM[0]}, {0, 1, -P_CAM_ARM[1]}, {0, 0, 1}};
-
-              // 计算坐标变换矩阵T_CAM_ARM
-              for (int i = 0; i < 3; i++)
-                {
-                  for (int j = 0; j < 3; j++)
-                    {
-                      T_CAM_ARM[i][j] = 0; // 初始化结果矩阵的元素为0
-                      for (int k = 0; k < 3; k++)
-                        {
-                          T_CAM_ARM[i][j] += T[i][k] * R[k][j];
-                        }
-                    }
-                }
-
-              // 计算P_BRICK_ARM = T_CAM_ARM * P_BRICK_CAM
-              for (int i = 0; i < 3; i++)
-                {
-                  P_BRICK_ARM[i] = 0;
-                  for (int j = 0; j < 3; j++)
-                    {
-                      P_BRICK_ARM[i] += T_CAM_ARM[i][j] * P_BRICK_CAM[j];
-                    }
-                }
-              RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0];
-              RobotArmData_Struct.SCARA_Cartesian[1] = -P_BRICK_ARM[1];
-              RobotArm_WaitStop();
-              Rotation_Claw(BrickData_Struct.yaw);
-            }
-          My_mDelay(5000);
+					          RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+          RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+					float tmp = RobotArmData_Struct.SCARA_Cartesian[2];
+					RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
+					
+      My_mDelay(10000);
+					
+					          RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+          RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+					RobotArmData_Struct.SCARA_Cartesian[2] = tmp;
         }
       while (1)
         {

@@ -58,16 +58,20 @@ RobotArmData_Typedef RobotArmData_Struct =
   .MotorAngle_Target[1] = 40,
   .MotorAngle_Target[2] = -84.5f,
   /***********机械臂坐标系***********/
-  .SCARA_Cartesian[0] = 0.0f,
-  .SCARA_Cartesian[1] = -316.7f,
-  .SCARA_Cartesian[2] = 220.0f,
+  .SCARA_Cartesian[0] = 270.0f,
+  .SCARA_Cartesian[1] = 0.0f,
+  .SCARA_Cartesian[2] = 50.0f,
 };
 /*******识别模块数据声明*******/
 RecognitionModule_s RecognitionModule_t;
 uint8_t Recognition_Buffer[Recognition_RX_LEN] = {0};
 uint8_t bool_recognitionflag = 0;
 /*******砖数据声明*******/
-BrickData_TypeDef BrickData_Struct = {0};
+BrickData_TypeDef BrickData_Struct = {0}; // 砖块当前数据
+BrickData_TypeDef BrickData_Struct_Buff[BRICK_DATA_BUFF_LEN] = {0}; // 砖块数据缓冲区，用于对齐时间轴
+int16_t brick_data_buff_pop_index = 0; // 往回BRICK_DATA_BUFF_DELAY_INDEX对应的数据下标
+int16_t brick_data_buff_push_index = 0; // 最新数据对应的数据下标
+int BRICK_DATA_BUFF_DELAY_INDEX = 0;
 /* Exported functions --------------------------------------------------------*/
 /**
   * @brief  修改过的数据存flash

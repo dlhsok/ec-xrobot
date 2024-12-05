@@ -32,6 +32,7 @@ void arm_setmode_to_normal( void );
 void ArmStop(void);
 void ArmSpeed_WaitCarToStop(void);
 void ArmSpeed_Set1(float _x_spd, float _y_spd ,float _yaw);
+void RobotArm_WaitStop(void);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
