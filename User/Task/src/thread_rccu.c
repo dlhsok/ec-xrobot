@@ -481,6 +481,8 @@ void ChassisSpeed_WaitCarToStop(void)
 }
 void ChassisSpeed_Set(float _x_spd, float _y_spd)
 {
+  sRemoteCtrl_Info.sPosition.vx = 0;
+  sRemoteCtrl_Info.sPosition.vy = 0;
   if( rccu_struct.mode_order != CHASSIS_NORMAL )
   {
     rccu_struct.mode_order = CHASSIS_NORMAL;

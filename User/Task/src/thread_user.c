@@ -283,7 +283,7 @@ typedef enum
   CHASSIS_STATE_9,         // 底盘从红色终点前丁字路口出发返回第一个丁字路口
   CHASSIS_STATE_10,        // 底盘从绿色终点前丁字路口出发返回第一个丁字路口
   CHASSIS_STATE_11,        // 底盘从蓝色终点前丁字路口出发返回第一个丁字路口
-
+  CHASSIS_STATE_12         // 底盘从第一个丁字路口回原点
 
 } robot_chassis_state;
 
@@ -292,18 +292,19 @@ uint8_t Line_ScanNum = 0;
 int stack_free, stack_percentage;
 int count_test = 10;
 robot_chassis_state game_stat, last_game_stat; // game的状态和上次状态
-float v1 = 100, v2 = 200, v3 = 300; // 三挡速度
+float v1 = 200, v2 = 350, v3 = 400; // 三挡速度
 uint8_t brick_count; // 已经夹取物块数量
-float l1 = 900, // 启动区到资源岛
-      l2 = 350, // 资源岛到第一个丁字路口=l1-550
+float l1 = 890, // 启动区到资源岛
+      l2 = 330, // 资源岛到第一个丁字路口
       l3 = 400, // 避障左右移动距离
       l4 = 200, // 车前进方向碰线后进行T字修正前移动量
-      l5 = 1200, // 超车障碍块前后移动距离
+      l5 = 1300, // 超车障碍块前后移动距离
       l6 = 1200, // 从红色终点T字往回走到
       l7 = 520, // 相邻终点的距离
       l8 = 220, // 物块阵列距离
-      l9 = 80,  // 在资源岛跟前原地纠正后再走距离
-      l10 = 100; // 放置物块前向前走距离
+      l9 = 30,  // 在资源岛跟前原地纠正后再走距离
+      l10 = 130, // 放置物块前向前走距离
+      l11 = 580; // 从第一个丁字路口返回启动区的距离
 
 float theta = 0, // 相机系x轴到机械臂系x轴角位移
       phi = 0, // 机械臂在xy平面投影向量相对于机械臂系y轴夹角
@@ -319,16 +320,19 @@ float P_BRICK_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
 float P_CLAW_OFFSET_CAM[2] = {-5, -58.7}; // 相机系里面夹爪要到的最终位置
 float P_CLAW_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
 
-float P_CLAW_GRAB_Z = -170;
+float P_CLAW_GRAB_Z = -160;
+float P_CLAW_SETTLE_Z = -160;
 float P_CLAW_DETECT_Z = 0;
 
 float P_CLAW_HOVER_X = 55;
-float P_CLAW_HOVER_Y = -300;
-float P_CLAW_HOVER_Z = 150;
+float P_CLAW_HOVER_Y = -270;
+float P_CLAW_HOVER_Z = 80;
 
-float P_CLAW_SETTLE_Z = -170;
-float P_CLAW_SETTLE_Y = -350;
-float P_CLAW_SETTLE_X = 55;
+
+float P_CLAW_SETTLE_Y = -320;
+float P_CLAW_SETTLE_X = 55-30;
+
+int16_t situ_adj_ms = 500;
 
 
 
@@ -363,8 +367,8 @@ void move_arm_to_brick()
   {
     P_BRICK_CAM[0] = P_BRICK_OFFSET_CAM[0] + (BrickData_Struct.x - P_BRICK_OFFSET_CAM[0]) * distance_xy_scale_ratio;
     P_BRICK_CAM[1] = P_BRICK_OFFSET_CAM[1] + (BrickData_Struct.y - P_BRICK_OFFSET_CAM[1]) * distance_xy_scale_ratio;
-    if( ABS(P_BRICK_CAM[0] - P_BRICK_OFFSET_CAM[0]) < 0.5
-        &&  ABS(P_BRICK_CAM[1] - P_BRICK_OFFSET_CAM[1]) < 0.5 )
+    if( ABS(P_BRICK_CAM[0] - P_BRICK_OFFSET_CAM[0]) < 0.5f
+        &&  ABS(P_BRICK_CAM[1] - P_BRICK_OFFSET_CAM[1]) < 0.5f )
       break;
     if(BrickData_Struct.rec_flg)
     {
@@ -636,10 +640,10 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l1 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
-        My_mDelay(1000);
-        ChassisSpeed_Set(v2, 0);
-        My_mDelay(1000 * l9 / v2);
+        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, situ_adj_ms);
+        My_mDelay(situ_adj_ms);
+        ChassisSpeed_Set(v1, 0);
+        My_mDelay(1000 * l9 / v1);
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_2;
         break;
@@ -662,13 +666,13 @@ void PathWrite_task(void *pvParameters)
           ChassisSpeed_Set(0, 0);
         }
 
-        My_mDelay(1000);
+        My_mDelay(50);
         for(int i = 0; i < 3; i++)
         {
           RecognitionModule_t.RecognitionModuleSte = i + 1; // 遍历红绿蓝
 //          // 清除新数据标志位
 //          BrickData_Struct.rec_flg = false;
-          My_mDelay(1000);
+          My_mDelay(350);
 
           switch(i)
           {
@@ -713,22 +717,22 @@ void PathWrite_task(void *pvParameters)
         RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
         RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
         RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
-        My_mDelay(1000);
+        My_mDelay(500);
         RobotArm_WaitStop();
         My_mDelay(500);
         RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
-        My_mDelay(1000);
+        My_mDelay(500);
         // 反着走夹取的路径
         RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
         RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
-        RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_DETECT_Z;
-        My_mDelay(1000);
+        RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_HOVER_Z;
+        My_mDelay(500);
         RobotArm_WaitStop();
         // 到达中间位置
         RobotArmData_Struct.SCARA_Cartesian[0] = P_CLAW_HOVER_X;
         RobotArmData_Struct.SCARA_Cartesian[1] = P_CLAW_HOVER_Y;
         RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_HOVER_Z;
-        My_mDelay(1000);
+        My_mDelay(500);
 
         // 根据夹取物块数量前后移动特定距离（返回）
         if(brick_count == 0)
@@ -748,20 +752,9 @@ void PathWrite_task(void *pvParameters)
           ChassisSpeed_Set(0, 0);
         }
 
-        ChassisSpeed_Set(-v2, 0);
-        My_mDelay(1000 * l9 / v2);
+        ChassisSpeed_Set(-v1, 0);
+        My_mDelay(1000 * l9 / v1);
         ChassisSpeed_Set(0, 0);
-
-        // 先夹取上面的，中间的，下面的
-//						利用brick_count;
-//        if(brick_count == 0)
-//          color_now = color_red; // 我夹到了红色
-//        else if(brick_count == 1)
-//          color_now = color_green; // 我夹到了红色
-//        else if(brick_count == 2)
-//          color_now = color_blue; // 我夹到了红色
-//        else if(brick_count == 2)
-//          color_now = color_red; // 我夹到了红色
         game_stat = CHASSIS_STATE_3;
         break;
       case CHASSIS_STATE_3:  // 底盘从资源岛到第一个丁字路口并在位修正
@@ -769,8 +762,8 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l2 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, situ_adj_ms);
+        My_mDelay(situ_adj_ms);
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_4;
         break;
@@ -786,8 +779,8 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, situ_adj_ms*2);
+        My_mDelay(situ_adj_ms*2);
 
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_8;
@@ -795,8 +788,8 @@ void PathWrite_task(void *pvParameters)
       case CHASSIS_STATE_6:  // 底盘检测到障碍物之后走到绿色终点前丁字路口并在位修正
         ChassisSpeed_Set(-v2, 0);
         My_mDelay(1000 * l3 / v2);
-        ChassisSpeed_Set(0, v2);
-        My_mDelay(1000 * l5 / v2);
+        ChassisSpeed_Set(0, v3);
+        My_mDelay(1000 * l5 / v3);
         ChassisSpeed_Set(v2, 0);
         My_mDelay(1000 * l3 / v2);
         rccu_setmode_to_tracking();
@@ -807,8 +800,8 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l4 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, situ_adj_ms);
+        My_mDelay(situ_adj_ms);
         ChassisSpeed_Set(0, 0);
         if(color_now == color_red)
         {
@@ -828,31 +821,37 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, situ_adj_ms*2);
+        My_mDelay(situ_adj_ms*2);
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_8;
         break;
       case CHASSIS_STATE_8:
         // 向前微调
-        ChassisSpeed_Set(0, v2);
-        My_mDelay(1000 * l10 / v2);
+        ChassisSpeed_Set(0, v1);
+        My_mDelay(1000 * l10 / v1);
         ChassisSpeed_Set(0, 0);
         // 机械臂放置物块
         RobotArmData_Struct.SCARA_Cartesian[0] = P_CLAW_SETTLE_X;
         RobotArmData_Struct.SCARA_Cartesian[1] = P_CLAW_SETTLE_Y;
         RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_SETTLE_Z;
-        My_mDelay(1000);
+      
+        Rotation_Claw(0);
+        My_mDelay(500);
         RobotArm_WaitStop();
         RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
+        My_mDelay(500);
+      
+        // 先让机械臂往上走
+        RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_HOVER_Z;
         My_mDelay(1000);
         RobotArmData_Struct.SCARA_Cartesian[0] = P_CLAW_HOVER_X;
         RobotArmData_Struct.SCARA_Cartesian[1] = P_CLAW_HOVER_Y;
         RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_HOVER_Z;
-        My_mDelay(1000);
+        My_mDelay(500);
         // 向后微调
-        ChassisSpeed_Set(0, -v2);
-        My_mDelay(1000 * l10 / v2);
+        ChassisSpeed_Set(0, -v1);
+        My_mDelay(1000 * l10 / v1);
         ChassisSpeed_Set(0, 0);
 
         RobotArm_WaitStop();
@@ -876,8 +875,8 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, situ_adj_ms);
+        My_mDelay(situ_adj_ms);
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_10;
         break;
@@ -891,8 +890,8 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l3 / v2);
         ChassisSpeed_Set(0, -v2);
         My_mDelay(1000 * l5 / v2);
-        ChassisSpeed_Set(v2, 0);
-        My_mDelay(1000 * l3 / v2);
+        ChassisSpeed_Set(v3, 0);
+        My_mDelay(1000 * l3 / v3);
         rccu_setmode_to_tracking();
         My_mDelay(100);
         move_arm_to_start_position(); // 移动机械臂到初始位置
@@ -902,16 +901,22 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l4 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, situ_adj_ms);
+        // 到了第一个丁字路口，返回启动区
+        if(brick_count >= 3){
+          game_stat = CHASSIS_STATE_12;
+          break;
+        }
+        My_mDelay(200);
         ChassisSpeed_Set(v2, 0);
         My_mDelay(1000 * l2 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
+        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, situ_adj_ms);
+        My_mDelay(situ_adj_ms);
         RobotArm_WaitStop();
-        My_mDelay(1000);
         game_stat = CHASSIS_STATE_2;
+          
         break;
       case CHASSIS_STATE_11:
         // 底盘从蓝色终点前丁字路口出发返回绿色终点
@@ -919,17 +924,24 @@ void PathWrite_task(void *pvParameters)
         My_mDelay(1000 * l7 / v2);
         rccu_setmode_to_tracking();
         My_mDelay(100);
-        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-        My_mDelay(1000);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, situ_adj_ms*2);
+        My_mDelay(situ_adj_ms*2);
         ChassisSpeed_Set(0, 0);
         game_stat = CHASSIS_STATE_10;
+        break;
+      case CHASSIS_STATE_12:
+        // 底盘从第一个丁字路口返回启动区
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l11 / v2);
+        ChassisSpeed_Set(0, 0);
+        game_stat = CHASSIS_STATE_0;
         break;
       default:
         break;
       }
       ChassisSpeed_Set(0, 0);
       buzz_note_state_delay_100ms_end();
-      My_mDelay(1000);
+      My_mDelay(100);
     }
     while( (KEY_4() == 0) || (lcd_page != 1))
     {
