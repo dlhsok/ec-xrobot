@@ -155,7 +155,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>ST-LINKIII-KEIL_SWO</Key>
-          <Name>-UE1007200D0D2139393740544 -O2254 -SF10000 -C0 -A0 -I0 -HNlocalhost -HP7184 -P1 -N00("ARM CoreSight SW-DP (ARM Core") -D00(2BA01477) -L00(0) -TO131090 -TC10000000 -TT10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_512.FLM -FS08000000 -FL080000 -FP0($$Device:STM32F407VETx$CMSIS\Flash\STM32F4xx_512.FLM)</Name>
+          <Name>-UE1007200D0D2139393740544 -O2254 -SF10000 -C0 -A0 -I0 -HNlocalhost -HP7184 -P1 -N00("ARM CoreSight SW-DP (ARM Core") -D00(2BA01477) -L00(0) -TO131090 -TC10000000 -TT10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_512.FLM -FS08000000 -FL080000 -FP0($$Device:STM32F407VETx$CMSIS\Flash\STM32F4xx_512.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
@@ -676,6 +676,21 @@
           <count>47</count>
           <WinNumber>2</WinNumber>
           <ItemText>RecognitionModule_t</ItemText>
+        </Ww>
+        <Ww>
+          <count>48</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>BrickData_Struct_Buff</ItemText>
+        </Ww>
+        <Ww>
+          <count>49</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>brick_data_buff_pop_index</ItemText>
+        </Ww>
+        <Ww>
+          <count>50</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>BrickData_Struct,0x0A</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>

@@ -68,10 +68,10 @@ uint8_t Recognition_Buffer[Recognition_RX_LEN] = {0};
 uint8_t bool_recognitionflag = 0;
 /*******砖数据声明*******/
 BrickData_TypeDef BrickData_Struct = {0}; // 砖块当前数据
-BrickData_TypeDef BrickData_Struct_Buff[BRICK_DATA_BUFF_LEN] = {0}; // 砖块数据缓冲区，用于对齐时间轴
-int16_t brick_data_buff_pop_index = 0; // 往回BRICK_DATA_BUFF_DELAY_INDEX对应的数据下标
-int16_t brick_data_buff_push_index = 0; // 最新数据对应的数据下标
-int BRICK_DATA_BUFF_DELAY_INDEX = 0;
+//BrickData_TypeDef BrickData_Struct_Buff[BRICK_DATA_BUFF_LEN] = {0}; // 砖块数据缓冲区，用于对齐时间轴
+//int16_t brick_data_buff_pop_index = 0; // 往回BRICK_DATA_BUFF_DELAY_INDEX对应的数据下标
+//int16_t brick_data_buff_push_index = 0; // 最新数据对应的数据下标
+//int BRICK_DATA_BUFF_DELAY_INDEX = 0;
 /* Exported functions --------------------------------------------------------*/
 /**
   * @brief  修改过的数据存flash

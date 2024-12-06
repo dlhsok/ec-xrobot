@@ -221,22 +221,23 @@ void XferExternalUart5Rx_Handler(char *pdata, uint16_t len)
     pdat++;
     BrickData_Struct.yaw = atoi(pdat);
 		receive_count++;
-		if(receive_count > BRICK_DATA_BUFF_DELAY_INDEX){
-			BrickData_Struct.rec_flg = true;
-		}
-		else
-			BrickData_Struct.rec_flg = false;
+    BrickData_Struct.rec_flg = true;
+//		if(receive_count > BRICK_DATA_BUFF_DELAY_INDEX){
+//			BrickData_Struct.rec_flg = true;
+//		}
+//		else
+//			BrickData_Struct.rec_flg = false;
 		
-		BrickData_Struct_Buff[brick_data_buff_push_index] = BrickData_Struct;
-		
-		brick_data_buff_pop_index = brick_data_buff_push_index - BRICK_DATA_BUFF_DELAY_INDEX;
-		brick_data_buff_push_index++;
-		if(brick_data_buff_pop_index < 0)
-		{
-			brick_data_buff_pop_index+=BRICK_DATA_BUFF_LEN;
-		}
-		if(brick_data_buff_push_index == BRICK_DATA_BUFF_LEN)
-			brick_data_buff_push_index = 0;
+//		BrickData_Struct_Buff[brick_data_buff_push_index] = BrickData_Struct;
+//		
+//		brick_data_buff_pop_index = brick_data_buff_push_index - BRICK_DATA_BUFF_DELAY_INDEX;
+//		brick_data_buff_push_index++;
+//		if(brick_data_buff_pop_index < 0)
+//		{
+//			brick_data_buff_pop_index+=BRICK_DATA_BUFF_LEN;
+//		}
+//		if(brick_data_buff_push_index == BRICK_DATA_BUFF_LEN)
+//			brick_data_buff_push_index = 0;
   }
 }
 
