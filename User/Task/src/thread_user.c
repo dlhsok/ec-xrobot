@@ -310,11 +310,12 @@ float T_CAM_ARM[3][3]; // 相机坐标系向机械臂坐标系的坐标变换矩阵
 float P_CAM_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到相机坐标系原点向量（ARM系）
 float P_BRICK_CAM[3] = {0, 0, 1}; // 相机坐标系原点到物块中心点向量（CAM系）
 float P_BRICK_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到物块中心点向量（ARM系）
-float P_BRICK_OFFSET_CAM[2] = {0, 55}; // 相机系里面物块要到的最终位置
+float P_BRICK_OFFSET_CAM[2] = {0, 0}; // 相机系里面物块要到的最终位置
 float P_BRICK_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
-float P_CLAW_OFFSET_CAM[2] = {0, 0}; // 相机系里面物块要到的最终位置
+float P_CLAW_OFFSET_CAM[2] = {-5, -48.7}; // 相机系里面夹爪要到的最终位置
 float P_CLAW_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
-float P_CLAW_GRAB_Z = -100;
+float P_CLAW_GRAB_Z = -170;
+float P_CLAW_DETECT_Z=0;
 
 float distance_xy_scale_ratio = 0.8;
 
@@ -405,9 +406,9 @@ void move_arm_to_brick()
 //              RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1];
           My_mDelay(500);
           RobotArm_WaitStop();
-          My_mDelay(500);
+//          My_mDelay(500);
 //								My_mDelay(300);
-          Rotation_Claw(BrickData_Struct.yaw);
+
 //								My_mDelay(300);
         }
 //          My_mDelay(500);
@@ -568,18 +569,22 @@ void PathWrite_task(void *pvParameters)
           move_arm_to_brick();
           buzz_note_state_delay_100ms_begin();
           RecognitionModule_Stop(&RecognitionModule_t);
+						          Rotation_Claw(BrickData_Struct.yaw);
 
-
-          RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
-          RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
-          float tmp = RobotArmData_Struct.SCARA_Cartesian[2];
-          RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
-
-          My_mDelay(10000);
 
           RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
           RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = tmp;
+          RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
+          
+
+          My_mDelay(1000);
+RobotArm_WaitStop();
+          RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+          RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+          RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_DETECT_Z;          
+					 My_mDelay(1000);
+					RobotArm_WaitStop();
+
         }
       while (1)
         {
