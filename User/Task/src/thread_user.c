@@ -44,12 +44,12 @@ int16_t position_Cartesian[3][3] = {{400, -140, -50}, {410, 20, -60}, {420, 280,
 int16_t position_Cartesian1[3][3] = {{400, -140, -130}, {410, 20, -130}, {420, 280, -80}};
 typedef enum
 {
-  color_green = 0,
-  color_red,
-  color_blue,
+  color_red = 0,
+  color_green,
+  color_blue
 } color_e;
 uint8_t color_set[] = {color_red, color_green, color_blue, color_green, color_blue, color_red};
-color_e color_now = color_green; // 当前正在夹取的物块颜色
+color_e color_now = color_red; // 当前正在夹取的物块颜色
 /***************************************************************/
 
 
@@ -70,17 +70,17 @@ static void Debug_Await(void)
 static void RobotArm_Rst(void)
 {
   while( ( RobotArmData_Struct.UploadData_U.bit.IN1 == 1 )
-  || ( RobotArmData_Struct.UploadData_U.bit.IN2 == 1 )
-  || ( RobotArmData_Struct.UploadData_U.bit.IN3 == 1 ) )
-    {
-      RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
-      RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
-      RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
-      My_mDelay(500);
-      RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
-      My_mDelay(500);
-      RobotArm_WaitStop();
-    }
+         || ( RobotArmData_Struct.UploadData_U.bit.IN2 == 1 )
+         || ( RobotArmData_Struct.UploadData_U.bit.IN3 == 1 ) )
+  {
+    RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
+    RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
+    RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
+    My_mDelay(500);
+    RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
+    My_mDelay(500);
+    RobotArm_WaitStop();
+  }
 }
 static void Recognition_Start(void)
 {
@@ -88,22 +88,22 @@ static void Recognition_Start(void)
   bool_recognitionflag = 0;
   RecognitionModule_Start(&RecognitionModule_t);
   while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
+  {
+    if(RecognitionModule_t.RecognitionModuleSte == RM_error)
     {
-      if(RecognitionModule_t.RecognitionModuleSte == RM_error)
-        {
-          //识别失败
-          if(RecognitionModule_t.err == ERR_disconnect)
-            {
-              My_mDelay(50);
-              RecognitionModule_Start(&RecognitionModule_t);
-            }
-        }
-      else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
-        {
-          break;
-        }
-      My_mDelay(10);
+      //识别失败
+      if(RecognitionModule_t.err == ERR_disconnect)
+      {
+        My_mDelay(50);
+        RecognitionModule_Start(&RecognitionModule_t);
+      }
     }
+    else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
+    {
+      break;
+    }
+    My_mDelay(10);
+  }
 
 }
 static void Rotation_Claw(int16_t _angle_x10)
@@ -148,117 +148,117 @@ static void IdentifyBrick_Get(float SET_LOCATION_X, float SET_LOCATION_Y)
   float yout = 0, xout = 0;
 
   while(1)
+  {
+#if Brick_XY_Debug == 1
+    IdentifyBrick_Get_cnt++;
+    SET_LOCATION_X = set_loc_x;
+    SET_LOCATION_Y = set_loc_y;
+#endif
+    if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
     {
-#if Brick_XY_Debug == 1
-      IdentifyBrick_Get_cnt++;
-      SET_LOCATION_X = set_loc_x;
-      SET_LOCATION_Y = set_loc_y;
-#endif
-      if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
-        {
-          x_err[1] = x_err[0];
-          x_err[0] = SET_LOCATION_X - BrickData_Struct.y;
-          xout = ( 0.8f * x_err[0] ) + ( 0.5f * ( x_err[0] - x_err[1] ) );
-          if( xout > SPEED_MAX ) xout = SPEED_MAX;
-          else if( xout < -SPEED_MAX )xout = -SPEED_MAX;
+      x_err[1] = x_err[0];
+      x_err[0] = SET_LOCATION_X - BrickData_Struct.y;
+      xout = ( 0.8f * x_err[0] ) + ( 0.5f * ( x_err[0] - x_err[1] ) );
+      if( xout > SPEED_MAX ) xout = SPEED_MAX;
+      else if( xout < -SPEED_MAX )xout = -SPEED_MAX;
 
-          y_err[1] = y_err[0];
-          y_err[0] = SET_LOCATION_Y - BrickData_Struct.x;
-          yout = ( 0.8f * y_err[0] ) + ( 0.5f * ( y_err[0] - y_err[1] ) );
-          if( yout > SPEED_MAX ) yout = SPEED_MAX;
-          else if( yout < -SPEED_MAX )yout = -SPEED_MAX;
+      y_err[1] = y_err[0];
+      y_err[0] = SET_LOCATION_Y - BrickData_Struct.x;
+      yout = ( 0.8f * y_err[0] ) + ( 0.5f * ( y_err[0] - y_err[1] ) );
+      if( yout > SPEED_MAX ) yout = SPEED_MAX;
+      else if( yout < -SPEED_MAX )yout = -SPEED_MAX;
 #if Brick_XY_Debug == 1
-          if(test == 1)
-            ChassisSpeed_Set(0, 0);
-          else
-#endif
-            if( ( ABS(y_err[0]) < 10 ) && ( ABS(x_err[0]) < 10 ) )
-              {
-                ChassisSpeed_Set(0, 0);
-#if Brick_XY_Debug == 0
-                break;
-#endif
-              }
-            else
-              {
-                ChassisSpeed_Set(-xout, yout);
-              }
-          timeout = 0;
-          RecognitionModule_t.RecognitionModuleSte = RM_Identify;
-        }
+      if(test == 1)
+        ChassisSpeed_Set(0, 0);
       else
-#if Brick_XY_Debug == 1
-        if (test == 0)
 #endif
-          {
-            timeout++;
-            if(timeout > 200)
-              {
-                timeout = 0;
-                ChassisCoord_Set(100, 0, 0);
-                ChassisCoord_WaitStop();
-                ChassisSpeed_Set(0, 0);
-              }
-          }
-      My_mDelay(25);
+        if( ( ABS(y_err[0]) < 10 ) && ( ABS(x_err[0]) < 10 ) )
+        {
+          ChassisSpeed_Set(0, 0);
+#if Brick_XY_Debug == 0
+          break;
+#endif
+        }
+        else
+        {
+          ChassisSpeed_Set(-xout, yout);
+        }
+      timeout = 0;
+      RecognitionModule_t.RecognitionModuleSte = RM_Identify;
     }
+    else
+#if Brick_XY_Debug == 1
+      if (test == 0)
+#endif
+      {
+        timeout++;
+        if(timeout > 200)
+        {
+          timeout = 0;
+          ChassisCoord_Set(100, 0, 0);
+          ChassisCoord_WaitStop();
+          ChassisSpeed_Set(0, 0);
+        }
+      }
+    My_mDelay(25);
+  }
   My_mDelay(2000);
   RecognitionModule_t.RecognitionModuleSte = RM_Identify;
   while(1)
+  {
+    if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
     {
-      if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
-        {
-          x_err[0] = SET_LOCATION_X - BrickData_Struct.y;
-          y_err[0] = SET_LOCATION_Y - BrickData_Struct.x ;
-          // x_err[0] = SET_LOCATION_X - BrickData_Struct.x;
-          // y_err[0] = BrickData_Struct.y - SET_LOCATION_Y;
-          ChassisCoord_Set(-x_err[0], y_err[0], 0);
-          ChassisCoord_WaitStop();
-          ChassisSpeed_Set(0, 0);
-          break;
-        }
+      x_err[0] = SET_LOCATION_X - BrickData_Struct.y;
+      y_err[0] = SET_LOCATION_Y - BrickData_Struct.x ;
+      // x_err[0] = SET_LOCATION_X - BrickData_Struct.x;
+      // y_err[0] = BrickData_Struct.y - SET_LOCATION_Y;
+      ChassisCoord_Set(-x_err[0], y_err[0], 0);
+      ChassisCoord_WaitStop();
+      ChassisSpeed_Set(0, 0);
+      break;
     }
+  }
 #else
   while(1)
+  {
+    if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
     {
-      if(RecognitionModule_t.RecognitionModuleSte == RM_succeed)
-        {
-          x_err[0] = SET_LOCATION_X - BrickData_Struct.x;
-          y_err[0] = BrickData_Struct.y - SET_LOCATION_Y;
+      x_err[0] = SET_LOCATION_X - BrickData_Struct.x;
+      y_err[0] = BrickData_Struct.y - SET_LOCATION_Y;
 #if 1
-          if( ( ABS(y_err[0]) <= 10 ) && ( ABS(x_err[0]) <= 10 ) )
-            {
-              ChassisSpeed_Set(0, 0);
-              break;
-            }
-          else
-            {
-              ChassisCoord_Set(y_err[0], x_err[0], 0);
-              ChassisCoord_WaitStop();
-              My_mDelay(2000);
-            }
-          RecognitionModule_t.RecognitionModuleSte = RM_Identify;
-#else
-          ChassisCoord_Set(y_err[0], x_err[0], 0);
-          ChassisCoord_WaitStop();
-          ChassisSpeed_Set(0, 0);
-          break;
-#endif
-          timeout = 0;
-        }
+      if( ( ABS(y_err[0]) <= 10 ) && ( ABS(x_err[0]) <= 10 ) )
+      {
+        ChassisSpeed_Set(0, 0);
+        break;
+      }
       else
-        {
-          timeout++;
-          if(timeout >= 100)
-            {
-              ChassisCoord_Set(-100, 0, 0);
-              ChassisCoord_WaitStop();
-              My_mDelay(1000);
-              timeout = 0;
-            }
-          My_mDelay(10);
-        }
+      {
+        ChassisCoord_Set(y_err[0], x_err[0], 0);
+        ChassisCoord_WaitStop();
+        My_mDelay(2000);
+      }
+      RecognitionModule_t.RecognitionModuleSte = RM_Identify;
+#else
+      ChassisCoord_Set(y_err[0], x_err[0], 0);
+      ChassisCoord_WaitStop();
+      ChassisSpeed_Set(0, 0);
+      break;
+#endif
+      timeout = 0;
     }
+    else
+    {
+      timeout++;
+      if(timeout >= 100)
+      {
+        ChassisCoord_Set(-100, 0, 0);
+        ChassisCoord_WaitStop();
+        My_mDelay(1000);
+        timeout = 0;
+      }
+      My_mDelay(10);
+    }
+  }
 #endif
 }
 /* Exported macros -----------------------------------------------------------*/
@@ -300,7 +300,9 @@ float l1 = 900, // 启动区到资源岛
       l4 = 200, // 车前进方向碰线后进行T字修正前移动量
       l5 = 1200, // 超车障碍块前后移动距离
       l6 = 1200, // 从红色终点T字往回走到
-      l7 = 520; //
+      l7 = 520, //
+      l8 = 220; // 物块阵列距离
+
 float theta = 0, // 相机系x轴到机械臂系x轴角位移
       phi = 0, // 机械臂在xy平面投影向量相对于机械臂系y轴夹角
       delta = 0, // 机械臂在xy平面投影向量到相机y轴的角位移
@@ -312,10 +314,10 @@ float P_BRICK_CAM[3] = {0, 0, 1}; // 相机坐标系原点到物块中心点向量（CAM系）
 float P_BRICK_ARM[3] = {0, 0, 1}; // 机械臂坐标系原点到物块中心点向量（ARM系）
 float P_BRICK_OFFSET_CAM[2] = {0, 0}; // 相机系里面物块要到的最终位置
 float P_BRICK_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
-float P_CLAW_OFFSET_CAM[2] = {-5, -48.7}; // 相机系里面夹爪要到的最终位置
+float P_CLAW_OFFSET_CAM[2] = {-5, -58.7}; // 相机系里面夹爪要到的最终位置
 float P_CLAW_OFFSET_ARM[2] = {0}; // P_BRICK_OFFSET_CAM变换到ARM系
 float P_CLAW_GRAB_Z = -170;
-float P_CLAW_DETECT_Z=0;
+float P_CLAW_DETECT_Z = 0;
 
 float distance_xy_scale_ratio = 0.8;
 
@@ -345,74 +347,74 @@ void move_arm_to_brick()
 {
 
   while(1)
+  {
+    P_BRICK_CAM[0] = P_BRICK_OFFSET_CAM[0] + (BrickData_Struct_Buff[brick_data_buff_pop_index].x - P_BRICK_OFFSET_CAM[0]) * distance_xy_scale_ratio;
+    P_BRICK_CAM[1] = P_BRICK_OFFSET_CAM[1] + (BrickData_Struct_Buff[brick_data_buff_pop_index].y - P_BRICK_OFFSET_CAM[1]) * distance_xy_scale_ratio;
+    if( ABS(P_BRICK_CAM[0] - P_BRICK_OFFSET_CAM[0]) < 0.5
+        &&  ABS(P_BRICK_CAM[1] - P_BRICK_OFFSET_CAM[1]) < 0.5 )
+      break;
+    if(BrickData_Struct.rec_flg)
     {
-      P_BRICK_CAM[0]=P_BRICK_OFFSET_CAM[0] + (BrickData_Struct_Buff[brick_data_buff_pop_index].x - P_BRICK_OFFSET_CAM[0]) * distance_xy_scale_ratio;
-      P_BRICK_CAM[1]=P_BRICK_OFFSET_CAM[1] + (BrickData_Struct_Buff[brick_data_buff_pop_index].y - P_BRICK_OFFSET_CAM[1]) * distance_xy_scale_ratio;
-      if( ABS(P_BRICK_CAM[0] - P_BRICK_OFFSET_CAM[0]) < 0.5
-          &&  ABS(P_BRICK_CAM[1] - P_BRICK_OFFSET_CAM[1]) < 0.5 )
-        break;
-      if(BrickData_Struct.rec_flg)
-        {
 //              buzz_note_state_delay_100ms_begin();
-          phi = atan2f(RobotArmData_Struct.SCARA_Cartesian[0], RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
-          theta = phi + delta;
-          BrickData_Struct.rec_flg = false;
-          P_CAM_ARM[0]=RobotArmData_Struct.SCARA_Cartesian[0];
-          P_CAM_ARM[1]=RobotArmData_Struct.SCARA_Cartesian[1];
+      phi = atan2f(RobotArmData_Struct.SCARA_Cartesian[0], RobotArmData_Struct.SCARA_Cartesian[1]) - epsilon;
+      theta = phi + delta;
+      BrickData_Struct.rec_flg = false;
+      P_CAM_ARM[0] = RobotArmData_Struct.SCARA_Cartesian[0];
+      P_CAM_ARM[1] = RobotArmData_Struct.SCARA_Cartesian[1];
 //              P_CAM_ARM[0]=P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
 //              P_CAM_ARM[1]=P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
 
 
-          float R[3][3] = {{cos(theta), sin(theta), 0}, {-sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
-          float T[3][3] = {{1, 0, P_CAM_ARM[0]}, {0, 1, P_CAM_ARM[1]}, {0, 0, 1}};
+      float R[3][3] = {{cos(theta), sin(theta), 0}, {-sin(theta), cos(theta), 0}, {0, 0, 1}}; //旋转矩阵
+      float T[3][3] = {{1, 0, P_CAM_ARM[0]}, {0, 1, P_CAM_ARM[1]}, {0, 0, 1}};
 
-          // 计算坐标变换矩阵T_CAM_ARM
-          for (int i = 0; i < 3; i++)
-            {
-              for (int j = 0; j < 3; j++)
-                {
-                  T_CAM_ARM[i][j] = 0; // 初始化结果矩阵的元素为0
-                  for (int k = 0; k < 3; k++)
-                    {
-                      T_CAM_ARM[i][j] += T[i][k] * R[k][j];
-                    }
-                }
-            }
+      // 计算坐标变换矩阵T_CAM_ARM
+      for (int i = 0; i < 3; i++)
+      {
+        for (int j = 0; j < 3; j++)
+        {
+          T_CAM_ARM[i][j] = 0; // 初始化结果矩阵的元素为0
+          for (int k = 0; k < 3; k++)
+          {
+            T_CAM_ARM[i][j] += T[i][k] * R[k][j];
+          }
+        }
+      }
 
-          // 计算P_BRICK_ARM = T_CAM_ARM * P_BRICK_CAM
-          for (int i = 0; i < 3; i++)
-            {
-              P_BRICK_ARM[i] = 0;
-              for (int j = 0; j < 3; j++)
-                {
-                  P_BRICK_ARM[i] += T_CAM_ARM[i][j] * P_BRICK_CAM[j];
-                }
-            }
-          // 计算P_BRICK_OFFSET_ARM = R_CAM_ARM * P_BRICK_OFFSET_CAM
-          for (int i = 0; i < 2; i++)
-            {
-              P_BRICK_OFFSET_ARM[i] = 0;
-              P_CLAW_OFFSET_ARM[i] = 0;
-              for (int j = 0; j < 2; j++)
-                {
-                  P_BRICK_OFFSET_ARM[i] += R[i][j] * P_BRICK_OFFSET_CAM[j];
-                  P_CLAW_OFFSET_ARM[i] += R[i][j] * P_CLAW_OFFSET_CAM[j];
-                }
-            }
+      // 计算P_BRICK_ARM = T_CAM_ARM * P_BRICK_CAM
+      for (int i = 0; i < 3; i++)
+      {
+        P_BRICK_ARM[i] = 0;
+        for (int j = 0; j < 3; j++)
+        {
+          P_BRICK_ARM[i] += T_CAM_ARM[i][j] * P_BRICK_CAM[j];
+        }
+      }
+      // 计算P_BRICK_OFFSET_ARM = R_CAM_ARM * P_BRICK_OFFSET_CAM
+      for (int i = 0; i < 2; i++)
+      {
+        P_BRICK_OFFSET_ARM[i] = 0;
+        P_CLAW_OFFSET_ARM[i] = 0;
+        for (int j = 0; j < 2; j++)
+        {
+          P_BRICK_OFFSET_ARM[i] += R[i][j] * P_BRICK_OFFSET_CAM[j];
+          P_CLAW_OFFSET_ARM[i] += R[i][j] * P_CLAW_OFFSET_CAM[j];
+        }
+      }
 //              ArmCoord_SetAbsolute(P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0], P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1]);
-          RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
+      RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0] - P_BRICK_OFFSET_ARM[0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1] - P_BRICK_OFFSET_ARM[1];
 //              RobotArmData_Struct.SCARA_Cartesian[0] = P_BRICK_ARM[0];
 //              RobotArmData_Struct.SCARA_Cartesian[1] = P_BRICK_ARM[1];
-          My_mDelay(500);
-          RobotArm_WaitStop();
+      My_mDelay(500);
+      RobotArm_WaitStop();
 //          My_mDelay(500);
 //								My_mDelay(300);
 
 //								My_mDelay(300);
-        }
-//          My_mDelay(500);
     }
+//          My_mDelay(500);
+  }
 }
 
 void PathWrite_task(void *pvParameters)
@@ -437,13 +439,13 @@ void PathWrite_task(void *pvParameters)
   while( (KEY_4() == 0) || (lcd_page != 1))
     My_mDelay(10);
 
-  game_stat = CHASSIS_STATE_0;
+  game_stat = CHASSIS_STATE_1;
 
 #if 1 //
   while(1)
-    {
+  {
 
-      /* ARM TEST */
+    /* ARM TEST */
 //    RobotArmData_Struct.MotorAngle_Target[2] = -90;
 //    for(int i = 0; i < 1000; i++)
 //    {
@@ -463,7 +465,7 @@ void PathWrite_task(void *pvParameters)
 //    RobotArm_WaitStop();
 //    My_mDelay(1500);
 
-      /* CHASSIS TEST */
+    /* CHASSIS TEST */
 //    ChassisCoord_Set(0, 10, 0);
 //    ChassisCoord_WaitStop();
 //    My_mDelay(200);
@@ -478,12 +480,12 @@ void PathWrite_task(void *pvParameters)
 //    My_mDelay(200);
 
 
-      /* BRICK FOLLOWING TEST */
+    /* BRICK FOLLOWING TEST */
 //    RecognitionModule_t.RecognitionModuleSte = 1; // red
 //    RecognitionModule_Start(&RecognitionModule_t);
 //  IdentifyBrick_Get(BrickData_Struct.x, BrickData_Struct.y);
 
-      /* LINE TRACKING TEST*/
+    /* LINE TRACKING TEST*/
 //    rccu_setmode_to_tracking();
 ////    My_mDelay(50);
 //		LineTracker_Execute_Condition(CarDirection_Head, 100, FindHead_Obstacle, 1, 0);
@@ -555,225 +557,280 @@ void PathWrite_task(void *pvParameters)
 //              My_mDelay(100);
 //              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 5000);
 //      Recognition_Start();
-      RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
-      RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
-      My_mDelay(1000);
-      RobotArm_WaitStop();
-      My_mDelay(1000);
 
-      while(1)
+    RobotArmData_Struct.SCARA_Cartesian[0] = 270.0f;
+    RobotArmData_Struct.SCARA_Cartesian[1] = 0.0f;
+    RobotArmData_Struct.SCARA_Cartesian[2] = 50.0f;
+
+    RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
+    RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
+    My_mDelay(300);
+    RobotArm_WaitStop();
+    My_mDelay(200);
+
+
+//    while(1)
+//    {
+//      Recognition_Start();
+//      RobotArm_WaitStop();
+//      My_mDelay(1000);
+//      move_arm_to_brick();
+//      buzz_note_state_delay_100ms_begin();
+//      RecognitionModule_Stop(&RecognitionModule_t);
+//      Rotation_Claw(BrickData_Struct.yaw);
+
+
+//      RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+//      RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+//      RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
+
+
+//      My_mDelay(1000);
+//      RobotArm_WaitStop();
+//      RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+//      RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+//      RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_DETECT_Z;
+//      My_mDelay(1000);
+//      RobotArm_WaitStop();
+
+//    }
+    while (1)
+    {
+      last_game_stat = game_stat;
+      buzz_note_state_delay_100ms_begin();
+      switch(game_stat)
+      {
+      case CHASSIS_STATE_0:  // 底盘机械臂停止
+        break;
+      case CHASSIS_STATE_1:  // 底盘从启动区到资源岛
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l1 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_2;
+        break;
+      case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
+        // 移动特定距离
+        if(brick_count == 0)
         {
-          Recognition_Start();
-          RobotArm_WaitStop();
-          My_mDelay(1000);
-          move_arm_to_brick();
-          buzz_note_state_delay_100ms_begin();
-          RecognitionModule_Stop(&RecognitionModule_t);
-						          Rotation_Claw(BrickData_Struct.yaw);
-
-
-          RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
-          RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
-          
-
-          My_mDelay(1000);
-RobotArm_WaitStop();
-          RobotArmData_Struct.SCARA_Cartesian[0] += P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
-          RobotArmData_Struct.SCARA_Cartesian[1] += P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_DETECT_Z;          
-					 My_mDelay(1000);
-					RobotArm_WaitStop();
+          ChassisSpeed_Set(0, v2);
+          My_mDelay(1000 * l8 / v2);
+        }
+        else if(brick_count == 1)
+        {
 
         }
-      while (1)
+        else if(brick_count == 2)
         {
-          last_game_stat = game_stat;
-          buzz_note_state_delay_100ms_begin();
-          switch(game_stat)
-            {
-            case CHASSIS_STATE_0:  // 底盘机械臂停止
-              break;
-            case CHASSIS_STATE_1:  // 底盘从启动区到资源岛
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l1 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_2;
-              break;
-            case CHASSIS_STATE_2:  // 机械臂从资源岛夹取物块
-              // 先夹取上面的，中间的，下面的
+          ChassisSpeed_Set(0, -v2);
+          My_mDelay(1000 * l8 / v2);
+        }
+        // 识别物块颜色
+        Recognition_Start();
+        for(int i = 0; i < 3; i++)
+        {
+          RecognitionModule_t.RecognitionModuleSte = i + 1; // 遍历红绿蓝
+
+          if(ABS(  BrickData_Struct_Buff[brick_data_buff_pop_index].x) < 100)
+            color_now = i;
+        }
+
+        RobotArm_WaitStop();
+        My_mDelay(100);
+        move_arm_to_brick();
+        buzz_note_state_delay_100ms_begin();
+        RecognitionModule_Stop(&RecognitionModule_t);
+        Rotation_Claw(BrickData_Struct.yaw);
+
+
+        RobotArmData_Struct.SCARA_Cartesian[0] -= P_BRICK_OFFSET_ARM[0] + P_CLAW_OFFSET_ARM[0];
+        RobotArmData_Struct.SCARA_Cartesian[1] -= P_BRICK_OFFSET_ARM[1] + P_CLAW_OFFSET_ARM[1];
+        RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_GRAB_Z;
+        My_mDelay(500);
+        RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
+        RobotArm_WaitStop();
+        
+        RobotArmData_Struct.SCARA_Cartesian[2] = P_CLAW_DETECT_Z;
+        My_mDelay(500);
+        RobotArm_WaitStop();
+        RobotArmData_Struct.SCARA_Cartesian[0] = 0;
+        RobotArmData_Struct.SCARA_Cartesian[1] = -300;
+        
+        
+        // 先夹取上面的，中间的，下面的
 //						利用brick_count;
-              if(brick_count == 0)
-                color_now = color_red; // 我夹到了红色
-              else if(brick_count == 1)
-                color_now = color_green; // 我夹到了红色
-              else if(brick_count == 2)
-                color_now = color_blue; // 我夹到了红色
-              else if(brick_count == 2)
-                color_now = color_red; // 我夹到了红色
-              game_stat = CHASSIS_STATE_3;
-              break;
-            case CHASSIS_STATE_3:  // 底盘从资源岛到第一个丁字路口并在位修正
-              ChassisSpeed_Set(-v2, 0);
-              My_mDelay(1000 * l2 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_4;
-              break;
-            case CHASSIS_STATE_4:  // 底盘从第一个丁字路口往前走避障
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Head, v1, FindHead_Obstacle, 1, 1);
-              LineTracker_WaitCarToStop();
-              game_stat = CHASSIS_STATE_6;
-              break;
-            case CHASSIS_STATE_5:  // 底盘绿色终点走向红色终点前丁字路口并在位修正
-              ChassisSpeed_Set(-v2, 0);
-              My_mDelay(1000 * l7 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_8;
-              break;
-            case CHASSIS_STATE_6:  // 底盘检测到障碍物之后走到绿色终点前丁字路口并在位修正
-              ChassisSpeed_Set(-v2, 0);
-              My_mDelay(1000 * l3 / v2);
-              ChassisSpeed_Set(0, v2);
-              My_mDelay(1000 * l5 / v2);
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l3 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Head, v1, FindEnd_Head, 1, 0);
-              LineTracker_WaitCarToStop();
-              ChassisSpeed_Set(0, v2);
-              My_mDelay(1000 * l4 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-              My_mDelay(1000);
-              if(color_now == color_red)
-                {
-                  game_stat = CHASSIS_STATE_5;
-                }
-              else if(color_now == color_green)
-                {
-                  game_stat = CHASSIS_STATE_8;
-                }
-              else if(color_now == color_blue)
-                {
-                  game_stat = CHASSIS_STATE_7;
-                }
-              break;
-            case CHASSIS_STATE_7:  // 底盘绿色终点走向蓝色终点前丁字路口并在位修正
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l7 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_8;
-              break;
-            case CHASSIS_STATE_8:
-              // 机械臂放置物块函数
-              if(color_now == color_red)
-                {
-                  game_stat = CHASSIS_STATE_9;
-                }
-              else if(color_now == color_green)
-                {
-                  game_stat = CHASSIS_STATE_10;
-                }
-              else if(color_now == color_blue)
-                {
-                  game_stat = CHASSIS_STATE_11;
-                }
-              break;
-            case CHASSIS_STATE_9:
-              // 底盘从红色终点前丁字路口出发返回绿色终点
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l7 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_10;
-              break;
-            case CHASSIS_STATE_10:
-              // 底盘从绿色终点前丁字路口出发返回资源岛
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Tail, v1, FindEnd_Obstacle, 1, 1);
-              LineTracker_WaitCarToStop();
-              ChassisSpeed_Set(-v2, 0);
-              My_mDelay(1000 * l3 / v2);
-              ChassisSpeed_Set(0, -v2);
-              My_mDelay(1000 * l5 / v2);
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l3 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_Condition(CarDirection_Tail, v1, FindEnd_Tail, 1, 0);
-              LineTracker_WaitCarToStop();
-              ChassisSpeed_Set(0, -v2);
-              My_mDelay(1000 * l4 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
-
-              ChassisSpeed_Set(v2, 0);
-              My_mDelay(1000 * l2 / v2);
-              brick_count++;
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_2;
-              break;
-            case CHASSIS_STATE_11:
-              // 底盘从蓝色终点前丁字路口出发返回绿色终点
-              ChassisSpeed_Set(-v2, 0);
-              My_mDelay(1000 * l7 / v2);
-              rccu_setmode_to_tracking();
-              My_mDelay(100);
-              LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
-              My_mDelay(1000);
-              game_stat = CHASSIS_STATE_10;
-              break;
-            default:
-              break;
-            }
-          ChassisSpeed_Set(0, 0);
-          buzz_note_state_delay_100ms_end();
-          My_mDelay(1000);
-        }
-      while( (KEY_4() == 0) || (lcd_page != 1))
+//        if(brick_count == 0)
+//          color_now = color_red; // 我夹到了红色
+//        else if(brick_count == 1)
+//          color_now = color_green; // 我夹到了红色
+//        else if(brick_count == 2)
+//          color_now = color_blue; // 我夹到了红色
+//        else if(brick_count == 2)
+//          color_now = color_red; // 我夹到了红色
+        game_stat = CHASSIS_STATE_3;
+        break;
+      case CHASSIS_STATE_3:  // 底盘从资源岛到第一个丁字路口并在位修正
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l2 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_4;
+        break;
+      case CHASSIS_STATE_4:  // 底盘从第一个丁字路口往前走避障
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_Condition(CarDirection_Head, v1, FindHead_Obstacle, 1, 1);
+        LineTracker_WaitCarToStop();
+        game_stat = CHASSIS_STATE_6;
+        break;
+      case CHASSIS_STATE_5:  // 底盘绿色终点走向红色终点前丁字路口并在位修正
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l7 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_8;
+        break;
+      case CHASSIS_STATE_6:  // 底盘检测到障碍物之后走到绿色终点前丁字路口并在位修正
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l3 / v2);
+        ChassisSpeed_Set(0, v2);
+        My_mDelay(1000 * l5 / v2);
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l3 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_Condition(CarDirection_Head, v1, FindEnd_Head, 1, 0);
+        LineTracker_WaitCarToStop();
+        ChassisSpeed_Set(0, v2);
+        My_mDelay(1000 * l4 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+        My_mDelay(1000);
+        if(color_now == color_red)
         {
-          My_mDelay(50);
-          rt_thread_t self = rt_thread_self();
-          rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
-          while (*ptr == '#') ptr++;
-          stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
-          stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+          game_stat = CHASSIS_STATE_5;
         }
-      while( (KEY_4() == 1) || (lcd_page != 1))
+        else if(color_now == color_green)
         {
-          My_mDelay(50);
-          rt_thread_t self = rt_thread_self();
-          rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
-          while (*ptr == '#') ptr++;
-          stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
-          stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+          game_stat = CHASSIS_STATE_8;
         }
+        else if(color_now == color_blue)
+        {
+          game_stat = CHASSIS_STATE_7;
+        }
+        break;
+      case CHASSIS_STATE_7:  // 底盘绿色终点走向蓝色终点前丁字路口并在位修正
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l7 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_8;
+        break;
+      case CHASSIS_STATE_8:
+        // 机械臂放置物块函数
+      
+        RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
+        brick_count++;
+        if(color_now == color_red)
+        {
+          game_stat = CHASSIS_STATE_9;
+        }
+        else if(color_now == color_green)
+        {
+          game_stat = CHASSIS_STATE_10;
+        }
+        else if(color_now == color_blue)
+        {
+          game_stat = CHASSIS_STATE_11;
+        }
+        break;
+      case CHASSIS_STATE_9:
+        // 底盘从红色终点前丁字路口出发返回绿色终点
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l7 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_10;
+        break;
+      case CHASSIS_STATE_10:
+        // 底盘从绿色终点前丁字路口出发返回资源岛
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_Condition(CarDirection_Tail, v1, FindEnd_Obstacle, 1, 1);
+        LineTracker_WaitCarToStop();
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l3 / v2);
+        ChassisSpeed_Set(0, -v2);
+        My_mDelay(1000 * l5 / v2);
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l3 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_Condition(CarDirection_Tail, v1, FindEnd_Tail, 1, 0);
+        LineTracker_WaitCarToStop();
+        ChassisSpeed_Set(0, -v2);
+        My_mDelay(1000 * l4 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Head, 0, 1000);
 
-      Debug_Await();
+        ChassisSpeed_Set(v2, 0);
+        My_mDelay(1000 * l2 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust(CarDirection_Right, 1, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_2;
+        break;
+      case CHASSIS_STATE_11:
+        // 底盘从蓝色终点前丁字路口出发返回绿色终点
+        ChassisSpeed_Set(-v2, 0);
+        My_mDelay(1000 * l7 / v2);
+        rccu_setmode_to_tracking();
+        My_mDelay(100);
+        LineTracker_Execute_SituAdjust_T_Line(CarDirection_Tail, 0, 1000);
+        My_mDelay(1000);
+        game_stat = CHASSIS_STATE_10;
+        break;
+      default:
+        break;
+      }
+      ChassisSpeed_Set(0, 0);
+      buzz_note_state_delay_100ms_end();
+      My_mDelay(1000);
     }
+    while( (KEY_4() == 0) || (lcd_page != 1))
+    {
+      My_mDelay(50);
+      rt_thread_t self = rt_thread_self();
+      rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
+      while (*ptr == '#') ptr++;
+      stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
+      stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+    }
+    while( (KEY_4() == 1) || (lcd_page != 1))
+    {
+      My_mDelay(50);
+      rt_thread_t self = rt_thread_self();
+      rt_uint8_t *ptr = (rt_uint8_t *)self->stack_addr;
+      while (*ptr == '#') ptr++;
+      stack_free = (rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr;
+      stack_percentage = 100 * ((rt_ubase_t)ptr - (rt_ubase_t)self->stack_addr) / self->stack_size;
+    }
+
+    Debug_Await();
+  }
 #endif
 
 
@@ -787,164 +844,164 @@ RobotArm_WaitStop();
 
 #if 0//
   while(1)
+  {
+    //进入到循迹模式
+    rccu_setmode_to_tracking();
+    //延时使任务切换，让rccu任务进行底盘模式切换操作
+    My_mDelay(50);
+    //以头为方向用250的速度循迹2条线，横线在车底时停止，不使用循迹纠正
+    LineTracker_Execute_LineNum(CarDirection_Head, 250, 1, 1, 0);
+    //机械臂底盘角度设置为-180
+    RobotArmData_Struct.MotorAngle_Target[2] = -180;
+    //角度使能
+    RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
+    //延时500使MODBUS通讯可以把数据传输过去
+    My_mDelay(500);
+    //以头为方向用250的速度循迹2条线，横线在车底时停止，使用循迹纠正
+    LineTracker_Execute_LineNum(CarDirection_Head, 250, 1, 1, 1);
+    LineTracker_Execute_SituAdjust(CarDirection_Head, 1, 1000);
+    //以左为方向用150的速度循迹1条线，横线在车刚刚循迹到就停止，使用循迹纠正
+    LineTracker_Execute_LineNum(CarDirection_Left, 150, 1, 0, 1);
+    for(run_cnt = 0; run_cnt < BRICK_NUM; run_cnt++)
     {
-      //进入到循迹模式
-      rccu_setmode_to_tracking();
-      //延时使任务切换，让rccu任务进行底盘模式切换操作
-      My_mDelay(50);
-      //以头为方向用250的速度循迹2条线，横线在车底时停止，不使用循迹纠正
-      LineTracker_Execute_LineNum(CarDirection_Head, 250, 1, 1, 0);
-      //机械臂底盘角度设置为-180
-      RobotArmData_Struct.MotorAngle_Target[2] = -180;
-      //角度使能
-      RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
-      //延时500使MODBUS通讯可以把数据传输过去
+      LineTracker_WaitCarToStop();
+      My_mDelay(2000);
+      RobotArm_WaitStop();
       My_mDelay(500);
-      //以头为方向用250的速度循迹2条线，横线在车底时停止，使用循迹纠正
-      LineTracker_Execute_LineNum(CarDirection_Head, 250, 1, 1, 1);
-      LineTracker_Execute_SituAdjust(CarDirection_Head, 1, 1000);
-      //以左为方向用150的速度循迹1条线，横线在车刚刚循迹到就停止，使用循迹纠正
-      LineTracker_Execute_LineNum(CarDirection_Left, 150, 1, 0, 1);
-      for(run_cnt = 0; run_cnt < BRICK_NUM; run_cnt++)
-        {
-          LineTracker_WaitCarToStop();
-          My_mDelay(2000);
-          RobotArm_WaitStop();
-          My_mDelay(500);
-          PositionXmm_Old = Read_Position_x_mm();
-          PositionYmm_Old = Read_Position_y_mm();
-          Recognition_Start();
-          IdentifyBrick_Get(-20, -20); //识别砖位置进行闭环控制小车底盘位置
-          My_mDelay(500);
-          RecognitionModule_Stop(&RecognitionModule_t);
-          Rotation_Claw(BrickData_Struct.yaw);
+      PositionXmm_Old = Read_Position_x_mm();
+      PositionYmm_Old = Read_Position_y_mm();
+      Recognition_Start();
+      IdentifyBrick_Get(-20, -20); //识别砖位置进行闭环控制小车底盘位置
+      My_mDelay(500);
+      RecognitionModule_Stop(&RecognitionModule_t);
+      Rotation_Claw(BrickData_Struct.yaw);
 //		RobotArmData_Struct.ServoPwmDuty[0] = Claw_S_MAX;
-          RobotArmData_Struct.SCARA_Cartesian[0] = -380;
-          RobotArmData_Struct.SCARA_Cartesian[1] = 0;
-          RobotArmData_Struct.SCARA_Cartesian[2] = -120;
-          My_mDelay(100);
-          RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
-          My_mDelay(1000);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.SCARA_Cartesian[2] = -170;
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
-          My_mDelay(400);
-          RobotArmData_Struct.SCARA_Cartesian[0] = -380;
-          RobotArmData_Struct.SCARA_Cartesian[1] = 0;
-          RobotArmData_Struct.SCARA_Cartesian[2] = -40;
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          PositionXmm_Diff = PositionXmm_Old - Read_Position_x_mm();
-          PositionYmm_Diff = PositionYmm_Old - Read_Position_y_mm();
-          ChassisCoord_Set( PositionXmm_Diff, PositionYmm_Diff, 0 );//转移到刚开始识别的位置
-          ChassisCoord_WaitStop();
-          My_mDelay(2000);
-
-
-
-          rccu_setmode_to_tracking();
-          My_mDelay(50);
-          LineTracker_Execute_LineNum(CarDirection_Right, 250, 2, 1, 1);
-          LineTracker_WaitCarToStop();
-          My_mDelay(500);
-          RobotArmData_Struct.SCARA_Cartesian[0] = 0;
-          RobotArmData_Struct.SCARA_Cartesian[1] = -380;//-(run_cnt*25);
-          RobotArmData_Struct.SCARA_Cartesian[2] = -100 + (run_cnt * 50);
-          LineTracker_Execute_LineNum(CarDirection_Head, 250, 5 - run_cnt, 0, 1);
-          Rotation_Claw(1000);
-          LineTracker_WaitCarToStop();
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.SCARA_Cartesian[2] = -170 + (run_cnt * 50); //放下
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
-          My_mDelay(300);
-          RobotArmData_Struct.SCARA_Cartesian[2] += 50;//机械臂抬起
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          if(run_cnt < (BRICK_NUM - 1))
-            {
-              RobotArmData_Struct.ServoPwmDuty[1] = Rotation_Claw_Init;
-              RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
-              RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
-              RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
-              My_mDelay(500);
-              RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
-              My_mDelay(500);
-              LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 150, 1);
-              LineTracker_WaitCarToStop();
-              My_mDelay(300);
-              LineTracker_Execute_LineNum(CarDirection_Tail, 250, 3 - run_cnt, 1, 1);
-              LineTracker_Execute_LineNum(CarDirection_Left, 250, 2, 0, 1);
-              RobotArm_Rst();
-              RobotArmData_Struct.MotorAngle_Target[2] = -180;
-              RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
-              My_mDelay(500);
-            }
-        }
-      for(; run_cnt > 0; run_cnt--)
-        {
-          if(run_cnt != BRICK_NUM)
-            {
-              LineTracker_Execute_LineNum(CarDirection_Left, 250, 2, 1, 1);
-              My_mDelay(2000);
-            }
-          RobotArmData_Struct.SCARA_Cartesian[0] = 0;
-          RobotArmData_Struct.SCARA_Cartesian[1] = -380;// - ( ( run_cnt - 1 ) * 25 );
-          RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 100;
-          My_mDelay(100);
-          if(run_cnt != BRICK_NUM)
-            {
-              LineTracker_Execute_LineNum(CarDirection_Head, 250, 4, 0, 1);
-            }
-          RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
-          RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
-          My_mDelay(1000);
-          RobotArm_WaitStop();
-          LineTracker_WaitCarToStop();
-          RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 170;
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
-          My_mDelay(400);
-          RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 80;
-          My_mDelay(900);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.SCARA_Cartesian[0] = 380;// + ((BRICK_NUM-run_cnt)*25);
-          RobotArmData_Struct.SCARA_Cartesian[1] = 0;
-          LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 150, 1);
-          LineTracker_WaitCarToStop();
-          My_mDelay(300);
-          RobotArmData_Struct.SCARA_Cartesian[2] = -100 + ((BRICK_NUM - run_cnt) * 50); //放下
-          LineTracker_Execute_LineNum(CarDirection_Tail, 250, 3, 1, 1);
-          LineTracker_Execute_LineNum(CarDirection_Right, 250, 2, 0, 1);
-          LineTracker_WaitCarToStop();
-          RobotArm_WaitStop();
-          RobotArmData_Struct.SCARA_Cartesian[2] = -170 + ((BRICK_NUM - run_cnt) * 50); //放
-          My_mDelay(500);
-          RobotArm_WaitStop();
-          RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
-          My_mDelay(300);
-          RobotArmData_Struct.SCARA_Cartesian[2] += 50;//机械臂抬起
-          My_mDelay(500);
-          RobotArm_WaitStop();
-        }
-      LineTracker_Execute_LineNum(CarDirection_Left, 250, 3, 1, 1);
-      RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
-      RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
-      RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
+      RobotArmData_Struct.SCARA_Cartesian[0] = -380;
+      RobotArmData_Struct.SCARA_Cartesian[1] = 0;
+      RobotArmData_Struct.SCARA_Cartesian[2] = -120;
+      My_mDelay(100);
+      RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
+      My_mDelay(1000);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.SCARA_Cartesian[2] = -170;
       My_mDelay(500);
-      RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
+      RobotArm_WaitStop();
+      RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
+      My_mDelay(400);
+      RobotArmData_Struct.SCARA_Cartesian[0] = -380;
+      RobotArmData_Struct.SCARA_Cartesian[1] = 0;
+      RobotArmData_Struct.SCARA_Cartesian[2] = -40;
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      PositionXmm_Diff = PositionXmm_Old - Read_Position_x_mm();
+      PositionYmm_Diff = PositionYmm_Old - Read_Position_y_mm();
+      ChassisCoord_Set( PositionXmm_Diff, PositionYmm_Diff, 0 );//转移到刚开始识别的位置
+      ChassisCoord_WaitStop();
+      My_mDelay(2000);
+
+
+
+      rccu_setmode_to_tracking();
+      My_mDelay(50);
+      LineTracker_Execute_LineNum(CarDirection_Right, 250, 2, 1, 1);
       LineTracker_WaitCarToStop();
       My_mDelay(500);
-      LineTracker_Execute_LineNum(CarDirection_Tail, 250, 4, 0, 1);
-      LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 420, 0);
+      RobotArmData_Struct.SCARA_Cartesian[0] = 0;
+      RobotArmData_Struct.SCARA_Cartesian[1] = -380;//-(run_cnt*25);
+      RobotArmData_Struct.SCARA_Cartesian[2] = -100 + (run_cnt * 50);
+      LineTracker_Execute_LineNum(CarDirection_Head, 250, 5 - run_cnt, 0, 1);
+      Rotation_Claw(1000);
       LineTracker_WaitCarToStop();
-      Debug_Await();
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.SCARA_Cartesian[2] = -170 + (run_cnt * 50); //放下
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
+      My_mDelay(300);
+      RobotArmData_Struct.SCARA_Cartesian[2] += 50;//机械臂抬起
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      if(run_cnt < (BRICK_NUM - 1))
+      {
+        RobotArmData_Struct.ServoPwmDuty[1] = Rotation_Claw_Init;
+        RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
+        RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
+        RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
+        My_mDelay(500);
+        RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
+        My_mDelay(500);
+        LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 150, 1);
+        LineTracker_WaitCarToStop();
+        My_mDelay(300);
+        LineTracker_Execute_LineNum(CarDirection_Tail, 250, 3 - run_cnt, 1, 1);
+        LineTracker_Execute_LineNum(CarDirection_Left, 250, 2, 0, 1);
+        RobotArm_Rst();
+        RobotArmData_Struct.MotorAngle_Target[2] = -180;
+        RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
+        My_mDelay(500);
+      }
     }
+    for(; run_cnt > 0; run_cnt--)
+    {
+      if(run_cnt != BRICK_NUM)
+      {
+        LineTracker_Execute_LineNum(CarDirection_Left, 250, 2, 1, 1);
+        My_mDelay(2000);
+      }
+      RobotArmData_Struct.SCARA_Cartesian[0] = 0;
+      RobotArmData_Struct.SCARA_Cartesian[1] = -380;// - ( ( run_cnt - 1 ) * 25 );
+      RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 100;
+      My_mDelay(100);
+      if(run_cnt != BRICK_NUM)
+      {
+        LineTracker_Execute_LineNum(CarDirection_Head, 250, 4, 0, 1);
+      }
+      RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 1;
+      RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 1;
+      My_mDelay(1000);
+      RobotArm_WaitStop();
+      LineTracker_WaitCarToStop();
+      RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 170;
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.ServoPwmDuty[0] = Claw_J;
+      My_mDelay(400);
+      RobotArmData_Struct.SCARA_Cartesian[2] = ( ( run_cnt - 1 ) * 50 ) - 80;
+      My_mDelay(900);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.SCARA_Cartesian[0] = 380;// + ((BRICK_NUM-run_cnt)*25);
+      RobotArmData_Struct.SCARA_Cartesian[1] = 0;
+      LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 150, 1);
+      LineTracker_WaitCarToStop();
+      My_mDelay(300);
+      RobotArmData_Struct.SCARA_Cartesian[2] = -100 + ((BRICK_NUM - run_cnt) * 50); //放下
+      LineTracker_Execute_LineNum(CarDirection_Tail, 250, 3, 1, 1);
+      LineTracker_Execute_LineNum(CarDirection_Right, 250, 2, 0, 1);
+      LineTracker_WaitCarToStop();
+      RobotArm_WaitStop();
+      RobotArmData_Struct.SCARA_Cartesian[2] = -170 + ((BRICK_NUM - run_cnt) * 50); //放
+      My_mDelay(500);
+      RobotArm_WaitStop();
+      RobotArmData_Struct.ServoPwmDuty[0] = Claw_S;
+      My_mDelay(300);
+      RobotArmData_Struct.SCARA_Cartesian[2] += 50;//机械臂抬起
+      My_mDelay(500);
+      RobotArm_WaitStop();
+    }
+    LineTracker_Execute_LineNum(CarDirection_Left, 250, 3, 1, 1);
+    RobotArmData_Struct.SCARAflg_U.bit.AngleCtrl_Enabled = 0;
+    RobotArmData_Struct.SCARAflg_U.bit.XYZ_Enabled = 0;
+    RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 1;
+    My_mDelay(500);
+    RobotArmData_Struct.SCARAflg_U.bit.SCARAReset_Enabled = 0;
+    LineTracker_WaitCarToStop();
+    My_mDelay(500);
+    LineTracker_Execute_LineNum(CarDirection_Tail, 250, 4, 0, 1);
+    LineTracker_Execute_Encoder(CarDirection_Tail, 200, 0, 420, 0);
+    LineTracker_WaitCarToStop();
+    Debug_Await();
+  }
 #endif
   //*/
 
@@ -963,10 +1020,10 @@ int Task_User_create(void)
                                        10,                      /* 线程的优先级 */
                                        20);                     /* 线程时间片 */
   if(thread_PathWrite != RT_NULL)
-    {
-      rt_thread_startup(thread_PathWrite);
-      rt_kprintf("thread_PathWrite startup!\n");
-    }
+  {
+    rt_thread_startup(thread_PathWrite);
+    rt_kprintf("thread_PathWrite startup!\n");
+  }
 
   return 0;
 }
@@ -991,22 +1048,22 @@ void RobotArmGetblock(uint8_t color)
 
   RecognitionModule_Start(&RecognitionModule_t);//视觉查找红色
   while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
+  {
+    if(RecognitionModule_t.RecognitionModuleSte == RM_error)
     {
-      if(RecognitionModule_t.RecognitionModuleSte == RM_error)
-        {
-          //识别失败
-          if(RecognitionModule_t.err == ERR_disconnect)
-            {
-              My_mDelay(50);
-              RecognitionModule_Start(&RecognitionModule_t);
-            }
-        }
-      else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
-        {
-          break;
-        }
-      My_mDelay(10);
+      //识别失败
+      if(RecognitionModule_t.err == ERR_disconnect)
+      {
+        My_mDelay(50);
+        RecognitionModule_Start(&RecognitionModule_t);
+      }
     }
+    else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
+    {
+      break;
+    }
+    My_mDelay(10);
+  }
 
 
 //	switch(color) //记录要抓取的颜色反馈给视觉，并等待视觉回馈
@@ -1082,58 +1139,58 @@ void RobotArmGetblock(uint8_t color)
   //右侧抓
   ChassisSpeed_Set(0, 0);
   switch(color)
+  {
+  case color_red:
+    color_haveget[color_red]++;
+    RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_red];//抓取物体
+    if(color_haveget[color_red] == 1)
     {
-    case color_red:
-      color_haveget[color_red]++;
-      RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_red];//抓取物体
-      if(color_haveget[color_red] == 1)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_red][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_red][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_red][2];
-        }
-      if(color_haveget[color_red] == 2)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_red][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_red][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_red][2];
-        }
-      break;
-    case color_green:
-      RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_green];//抓取物体
-      color_haveget[color_green]++;
-      if(color_haveget[color_green] == 1)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_green][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_green][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_green][2];
-        }
-      if(color_haveget[color_green] == 2)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_green][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_green][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_green][2];
-        }
-      break;
-    case color_blue:
-      color_haveget[color_blue]++;
-      RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_blue];//抓取物体
-      if(color_haveget[color_blue] == 1)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_blue][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_blue][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_blue][2];
-        }
-      if(color_haveget[color_blue] == 2)
-        {
-          RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_blue][0];
-          RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_blue][1];
-          RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_blue][2];
-        }
-      break;
-    default:
-      break;
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_red][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_red][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_red][2];
     }
+    if(color_haveget[color_red] == 2)
+    {
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_red][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_red][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_red][2];
+    }
+    break;
+  case color_green:
+    RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_green];//抓取物体
+    color_haveget[color_green]++;
+    if(color_haveget[color_green] == 1)
+    {
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_green][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_green][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_green][2];
+    }
+    if(color_haveget[color_green] == 2)
+    {
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_green][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_green][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_green][2];
+    }
+    break;
+  case color_blue:
+    color_haveget[color_blue]++;
+    RobotArmData_Struct.ServoPwmDuty[1] = ServoPwmDuty[color_blue];//抓取物体
+    if(color_haveget[color_blue] == 1)
+    {
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian[color_blue][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian[color_blue][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian[color_blue][2];
+    }
+    if(color_haveget[color_blue] == 2)
+    {
+      RobotArmData_Struct.SCARA_Cartesian[0] = position_Cartesian1[color_blue][0];
+      RobotArmData_Struct.SCARA_Cartesian[1] = position_Cartesian1[color_blue][1];
+      RobotArmData_Struct.SCARA_Cartesian[2] = position_Cartesian1[color_blue][2];
+    }
+    break;
+  default:
+    break;
+  }
 //	RobotArmData_Struct.SCARA_Cartesian[0] = 390;
 //	RobotArmData_Struct.SCARA_Cartesian[1] = 100;
 //	RobotArmData_Struct.SCARA_Cartesian[2] = -150+(2-color_haveget[color])*Brick_Size;
@@ -1178,107 +1235,107 @@ void RobotArmDown(uint8_t color)   // 堆料区0：左  1：中  2：右
 {
   set_num = color;
   switch(set_num)
+  {
+  // 0 1 2 代表从左往右的顺序
+  case 0 :
+    ChassisSpeed_Set(-100, 0); //当前地方满足要求，需要挪动
+    My_mDelay(1000);
+    while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) )
     {
-    // 0 1 2 代表从左往右的顺序
-    case 0 :
-      ChassisSpeed_Set(-100, 0); //当前地方满足要求，需要挪动
-      My_mDelay(1000);
-      while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) )
+      //假设ls1在左边  <=
+      ChassisSpeed_Set(-100, 0);
+    }
+    ChassisSpeed_Set(0, 0);
+    break;
+  case 1 :
+    ChassisSpeed_Set(0, 0);
+    break;
+  case 2 :
+    ChassisSpeed_Set(100, 0); //当前地方满足要求，需要挪动
+    My_mDelay(1000);
+    while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) ) //00011000  车头方向右侧是ls1
+    {
+      //假设ls1在左边  <=
+      ChassisSpeed_Set(100, 0);
+    }
+    ChassisSpeed_Set(0, 0);
+    break;
+  default:
+    break;
+  }
+  if(color_haveget[color] > 1) //叠物块
+  {
+    switch(color) //记录要抓取的颜色反馈给视觉，并等待视觉回馈
+    {
+    case color_red:
+      RecognitionModule_Start(&RecognitionModule_t);//视觉查找红色
+      while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
+      {
+        if(RecognitionModule_t.RecognitionModuleSte == RM_error)
         {
-          //假设ls1在左边  <=
-          ChassisSpeed_Set(-100, 0);
+          //识别失败
+          if(RecognitionModule_t.err == ERR_disconnect)
+          {
+            My_mDelay(50);
+            RecognitionModule_Start(&RecognitionModule_t);
+          }
         }
-      ChassisSpeed_Set(0, 0);
-      break;
-    case 1 :
-      ChassisSpeed_Set(0, 0);
-      break;
-    case 2 :
-      ChassisSpeed_Set(100, 0); //当前地方满足要求，需要挪动
-      My_mDelay(1000);
-      while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) ) //00011000  车头方向右侧是ls1
+        else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
         {
-          //假设ls1在左边  <=
-          ChassisSpeed_Set(100, 0);
+          break;
         }
-      ChassisSpeed_Set(0, 0);
+        My_mDelay(10);
+      }
+      break;
+    case color_green:
+      ColorRecognitionModule_Start(&RecognitionModule_t);//视觉查找绿色
+      while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
+      {
+        if(RecognitionModule_t.RecognitionModuleSte == RM_error)
+        {
+          //识别失败
+          if(RecognitionModule_t.err == ERR_disconnect)
+          {
+            My_mDelay(50);
+            ColorRecognitionModule_Start(&RecognitionModule_t);
+          }
+        }
+        else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
+        {
+          break;
+        }
+        My_mDelay(10);
+      }
+      break;
+    case color_blue:
+      CircleRecognitionModule_Start(&RecognitionModule_t);//视觉查找蓝色
+      while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
+      {
+        if(RecognitionModule_t.RecognitionModuleSte == RM_error)
+        {
+          //识别失败
+          if(RecognitionModule_t.err == ERR_disconnect)
+          {
+            My_mDelay(50);
+            CircleRecognitionModule_Start(&RecognitionModule_t);
+          }
+        }
+        else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
+        {
+          break;
+        }
+        My_mDelay(10);
+      }
       break;
     default:
       break;
     }
-  if(color_haveget[color] > 1) //叠物块
-    {
-      switch(color) //记录要抓取的颜色反馈给视觉，并等待视觉回馈
-        {
-        case color_red:
-          RecognitionModule_Start(&RecognitionModule_t);//视觉查找红色
-          while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
-            {
-              if(RecognitionModule_t.RecognitionModuleSte == RM_error)
-                {
-                  //识别失败
-                  if(RecognitionModule_t.err == ERR_disconnect)
-                    {
-                      My_mDelay(50);
-                      RecognitionModule_Start(&RecognitionModule_t);
-                    }
-                }
-              else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
-                {
-                  break;
-                }
-              My_mDelay(10);
-            }
-          break;
-        case color_green:
-          ColorRecognitionModule_Start(&RecognitionModule_t);//视觉查找绿色
-          while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
-            {
-              if(RecognitionModule_t.RecognitionModuleSte == RM_error)
-                {
-                  //识别失败
-                  if(RecognitionModule_t.err == ERR_disconnect)
-                    {
-                      My_mDelay(50);
-                      ColorRecognitionModule_Start(&RecognitionModule_t);
-                    }
-                }
-              else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
-                {
-                  break;
-                }
-              My_mDelay(10);
-            }
-          break;
-        case color_blue:
-          CircleRecognitionModule_Start(&RecognitionModule_t);//视觉查找蓝色
-          while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
-            {
-              if(RecognitionModule_t.RecognitionModuleSte == RM_error)
-                {
-                  //识别失败
-                  if(RecognitionModule_t.err == ERR_disconnect)
-                    {
-                      My_mDelay(50);
-                      CircleRecognitionModule_Start(&RecognitionModule_t);
-                    }
-                }
-              else if(RecognitionModule_t.RecognitionModuleSte == RM_Identify)
-                {
-                  break;
-                }
-              My_mDelay(10);
-            }
-          break;
-        default:
-          break;
-        }
-      IdentifyBrick_Get(-10, -25); //识别砖位置进行闭环控制小车底盘位置
+    IdentifyBrick_Get(-10, -25); //识别砖位置进行闭环控制小车底盘位置
 //两个值代表想要视觉识别的物体在视觉屏幕的位置(一般给视觉中心位置)，计算后反馈给底盘，底盘移动
-      My_mDelay(500);
-      RecognitionModule_Stop(&RecognitionModule_t);
-      Rotation_Claw(BrickData_Struct.yaw);
-    }
+    My_mDelay(500);
+    RecognitionModule_Stop(&RecognitionModule_t);
+    Rotation_Claw(BrickData_Struct.yaw);
+  }
 //75 -450 -150
   RobotArmData_Struct.SCARA_Cartesian[0] = 75;
   RobotArmData_Struct.SCARA_Cartesian[1] = -450;
@@ -1296,34 +1353,34 @@ void RobotArmDown(uint8_t color)   // 堆料区0：左  1：中  2：右
   RobotArm_WaitStop();
 
   switch(set_num)
+  {
+  // 0 1 2 代表从左往右的顺序
+  case 0 :
+    ChassisSpeed_Set(100, 0); //当前地方满足要求，需要挪动
+    My_mDelay(1000);
+    while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) )
     {
-    // 0 1 2 代表从左往右的顺序
-    case 0 :
-      ChassisSpeed_Set(100, 0); //当前地方满足要求，需要挪动
-      My_mDelay(1000);
-      while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) )
-        {
-          //假设ls1在左边  <=
-          ChassisSpeed_Set(150, 0);
-        }
-      ChassisSpeed_Set(0, 0);
-      break;
-    case 1 :
-      ChassisSpeed_Set(0, 0);
-      break;
-    case 2 :
-      ChassisSpeed_Set(-100, 0); //当前地方满足要求，需要挪动
-      My_mDelay(1000);
-      while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) ) //00011000  车头方向右侧是ls1
-        {
-          //假设ls1在左边  <=
-          ChassisSpeed_Set(-150, 0);
-        }
-      ChassisSpeed_Set(0, 0);
-      break;
-    default:
-      break;
+      //假设ls1在左边  <=
+      ChassisSpeed_Set(150, 0);
     }
+    ChassisSpeed_Set(0, 0);
+    break;
+  case 1 :
+    ChassisSpeed_Set(0, 0);
+    break;
+  case 2 :
+    ChassisSpeed_Set(-100, 0); //当前地方满足要求，需要挪动
+    My_mDelay(1000);
+    while((LineTrack_Scan(CarDirection_Tail, &Line_Count) & (3 << 3)) != (3 << 3) ) //00011000  车头方向右侧是ls1
+    {
+      //假设ls1在左边  <=
+      ChassisSpeed_Set(-150, 0);
+    }
+    ChassisSpeed_Set(0, 0);
+    break;
+  default:
+    break;
+  }
 }
 
 // BITWISE 扫描方式，可能会误判
@@ -1332,54 +1389,54 @@ uint8_t LineTrack_Scan(DirectionDef_e Car_Direction, uint8_t *Count)
   *Count = 0;
   uint8_t Line_ScanNum = 1;
   switch (Car_Direction)
-    {
-    case CarDirection_Head:
-      if(LineTracker_Struct.pSignal1->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-      if(LineTracker_Struct.pSignal1->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-      if(LineTracker_Struct.pSignal1->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-      if(LineTracker_Struct.pSignal1->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-      if(LineTracker_Struct.pSignal1->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-      if(LineTracker_Struct.pSignal1->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-      if(LineTracker_Struct.pSignal1->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-      if(LineTracker_Struct.pSignal1->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-      break;
-    case CarDirection_Tail:
-      if(LineTracker_Struct.pSignal3->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-      if(LineTracker_Struct.pSignal3->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-      if(LineTracker_Struct.pSignal3->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-      if(LineTracker_Struct.pSignal3->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-      if(LineTracker_Struct.pSignal3->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-      if(LineTracker_Struct.pSignal3->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-      if(LineTracker_Struct.pSignal3->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-      if(LineTracker_Struct.pSignal3->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-      break;
-    case CarDirection_Left:
-      if(LineTracker_Struct.pSignal2->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-      if(LineTracker_Struct.pSignal2->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-      if(LineTracker_Struct.pSignal2->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-      if(LineTracker_Struct.pSignal2->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-      if(LineTracker_Struct.pSignal2->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-      if(LineTracker_Struct.pSignal2->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-      if(LineTracker_Struct.pSignal2->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-      if(LineTracker_Struct.pSignal2->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-      break;
-    case CarDirection_Right:
-      if(LineTracker_Struct.pSignal4->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
-      if(LineTracker_Struct.pSignal4->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
-      if(LineTracker_Struct.pSignal4->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
-      if(LineTracker_Struct.pSignal4->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
-      if(LineTracker_Struct.pSignal4->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
-      if(LineTracker_Struct.pSignal4->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
-      if(LineTracker_Struct.pSignal4->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
-      if(LineTracker_Struct.pSignal4->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
-      break;
-    default:
-      break;
-    }
+  {
+  case CarDirection_Head:
+    if(LineTracker_Struct.pSignal1->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal1->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
+    if(LineTracker_Struct.pSignal1->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
+    if(LineTracker_Struct.pSignal1->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
+    if(LineTracker_Struct.pSignal1->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
+    if(LineTracker_Struct.pSignal1->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
+    if(LineTracker_Struct.pSignal1->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
+    if(LineTracker_Struct.pSignal1->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
+    break;
+  case CarDirection_Tail:
+    if(LineTracker_Struct.pSignal3->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal3->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
+    if(LineTracker_Struct.pSignal3->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
+    if(LineTracker_Struct.pSignal3->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
+    if(LineTracker_Struct.pSignal3->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
+    if(LineTracker_Struct.pSignal3->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
+    if(LineTracker_Struct.pSignal3->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
+    if(LineTracker_Struct.pSignal3->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
+    break;
+  case CarDirection_Left:
+    if(LineTracker_Struct.pSignal2->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal2->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
+    if(LineTracker_Struct.pSignal2->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
+    if(LineTracker_Struct.pSignal2->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
+    if(LineTracker_Struct.pSignal2->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
+    if(LineTracker_Struct.pSignal2->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
+    if(LineTracker_Struct.pSignal2->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
+    if(LineTracker_Struct.pSignal2->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
+    break;
+  case CarDirection_Right:
+    if(LineTracker_Struct.pSignal4->bit.ls1 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 0;
+    if(LineTracker_Struct.pSignal4->bit.ls2 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 1;
+    if(LineTracker_Struct.pSignal4->bit.ls3 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 2;
+    if(LineTracker_Struct.pSignal4->bit.ls4 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 3;
+    if(LineTracker_Struct.pSignal4->bit.ls5 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 4;
+    if(LineTracker_Struct.pSignal4->bit.ls6 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 5;
+    if(LineTracker_Struct.pSignal4->bit.ls7 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 6;
+    if(LineTracker_Struct.pSignal4->bit.ls8 == LineTracker_Struct.active_level) Line_ScanNum |= 1 << 7;
+    break;
+  default:
+    break;
+  }
   for(int i = 0; i < 8; i++)
-    {
-      if(Line_ScanNum & (1 << i))  (*Count)++;
-    }
+  {
+    if(Line_ScanNum & (1 << i))  (*Count)++;
+  }
   if(Line_ScanNum == 1) return 0;
   return Line_ScanNum;
 }
@@ -1452,58 +1509,58 @@ void Avoid_Obstacle(DirectionDef_e Car_Direction, uint8_t Car_side)
   ChassisSpeed_Set(0, 0);
   //速度控制
   switch (Car_Direction)
+  {
+  case CarDirection_Head:
+    if(Car_side == 0)
     {
-    case CarDirection_Head:
-      if(Car_side == 0)
-        {
-          ChassisSpeed_Set(-speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, speed);
-          My_mDelay(time + 2000);
-          ChassisSpeed_Set(speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, 0);
-          My_mDelay(time);
-        }
-      if(Car_side == 1)
-        {
-          ChassisSpeed_Set(speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, speed);
-          My_mDelay(time + 2000);
-          ChassisSpeed_Set(-speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, 0);
-          My_mDelay(time);
-        }
-      break;
-    case CarDirection_Tail:
-      if(Car_side == 0)
-        {
-          ChassisSpeed_Set(-speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, -speed);
-          My_mDelay(time + 2000);
-          ChassisSpeed_Set(speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, 0);
-          My_mDelay(time);
-        }
-      if(Car_side == 1)
-        {
-          ChassisSpeed_Set(speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, -speed);
-          My_mDelay(time + 2000);
-          ChassisSpeed_Set(-speed, 0);
-          My_mDelay(time);
-          ChassisSpeed_Set(0, 0);
-          My_mDelay(time);
-        }
-      break;
-    default:
-      break;
+      ChassisSpeed_Set(-speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, speed);
+      My_mDelay(time + 2000);
+      ChassisSpeed_Set(speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, 0);
+      My_mDelay(time);
     }
+    if(Car_side == 1)
+    {
+      ChassisSpeed_Set(speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, speed);
+      My_mDelay(time + 2000);
+      ChassisSpeed_Set(-speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, 0);
+      My_mDelay(time);
+    }
+    break;
+  case CarDirection_Tail:
+    if(Car_side == 0)
+    {
+      ChassisSpeed_Set(-speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, -speed);
+      My_mDelay(time + 2000);
+      ChassisSpeed_Set(speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, 0);
+      My_mDelay(time);
+    }
+    if(Car_side == 1)
+    {
+      ChassisSpeed_Set(speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, -speed);
+      My_mDelay(time + 2000);
+      ChassisSpeed_Set(-speed, 0);
+      My_mDelay(time);
+      ChassisSpeed_Set(0, 0);
+      My_mDelay(time);
+    }
+    break;
+  default:
+    break;
+  }
   //位置控制
 //	//x轴平移
 //	PositionXmm_Diff =  dir*Obstacle_length*1.0/2.0+PositionXmm_Old - Read_Position_x_mm();
@@ -1531,50 +1588,50 @@ uint8_t Find_Obstacle(DirectionDef_e Car_Direction)//巡线方向等待障碍物CarDirect
   uint16_t Distance = 0;
 
   switch (Car_Direction)
+  {
+  case CarDirection_Head:
+
+    if(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance2)//防止超声波距离过长时，检测输出无效
     {
-    case CarDirection_Head:
-
-      if(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance2)//防止超声波距离过长时，检测输出无效
-        {
 //				LineSingle_Tracker(LineTrack_Scan(CarDirection_Head,&Line_Count),CarDirection_Head);
-          time_cnt = 0;
-          while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance2 <= 200) //车头方向的超声波距离
-            {
-              My_mDelay(5);  //此处更改探查到障碍物后的停车距离
-              time_cnt++;
-              if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
-                {
-                  LineTracker_Struct.run_mode = Mode_Await;
-                  time_cnt = 0;
-//						ChassisSpeed_Set(0,0);
-                  return 1;//前方有障碍物，此时条件循迹条件达成
-                }
-            }
-        }
-      break;
-    case CarDirection_Tail:
-
-      while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance4)
+      time_cnt = 0;
+      while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance2 <= 200) //车头方向的超声波距离
+      {
+        My_mDelay(5);  //此处更改探查到障碍物后的停车距离
+        time_cnt++;
+        if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
         {
-//				LineSingle_Tracker(LineTrack_Scan(CarDirection_Tail,&Line_Count),CarDirection_Tail);
+          LineTracker_Struct.run_mode = Mode_Await;
           time_cnt = 0;
-          while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance4 <= 200) //车头方向的超声波距离
-            {
-              My_mDelay(5);  //此处更改探查到障碍物后的停车距离
-              time_cnt++;
-              if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
-                {
-                  LineTracker_Struct.run_mode = Mode_Await;
-                  time_cnt = 0;
-//					ChassisSpeed_Set(0,0);
-                  return 1;//前方有障碍物，此时条件循迹条件达成
-                }
-            }
+//						ChassisSpeed_Set(0,0);
+          return 1;//前方有障碍物，此时条件循迹条件达成
         }
-      break;
-    default:
-      break;
+      }
     }
+    break;
+  case CarDirection_Tail:
+
+    while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance4)
+    {
+//				LineSingle_Tracker(LineTrack_Scan(CarDirection_Tail,&Line_Count),CarDirection_Tail);
+      time_cnt = 0;
+      while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance4 <= 200) //车头方向的超声波距离
+      {
+        My_mDelay(5);  //此处更改探查到障碍物后的停车距离
+        time_cnt++;
+        if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
+        {
+          LineTracker_Struct.run_mode = Mode_Await;
+          time_cnt = 0;
+//					ChassisSpeed_Set(0,0);
+          return 1;//前方有障碍物，此时条件循迹条件达成
+        }
+      }
+    }
+    break;
+  default:
+    break;
+  }
   return 0;
 }
 void LineSingle_Tracker(uint8_t Line_TrackScan, DirectionDef_e Car_Direction)
@@ -1586,13 +1643,13 @@ void LineSingle_Tracker(uint8_t Line_TrackScan, DirectionDef_e Car_Direction)
   // 遍历每个灯珠的状态
 
   for (int i = 0; i < 8; i++)
+  {
+    if (Line_TrackScan & (1 << i))   // 检查灯珠是否被激活
     {
-      if (Line_TrackScan & (1 << i))   // 检查灯珠是否被激活
-        {
-          if(i < 4) you_count += (4 - i);
-          if(i >= 4) zuo_count += -(i - 4);
-        }
+      if(i < 4) you_count += (4 - i);
+      if(i >= 4) zuo_count += -(i - 4);
     }
+  }
   // 计算PID控制输出
   if(Car_Direction == CarDirection_Head)
     error = you_count + zuo_count; // 计算偏差
@@ -1600,29 +1657,29 @@ void LineSingle_Tracker(uint8_t Line_TrackScan, DirectionDef_e Car_Direction)
     error = zuo_count - you_count; // 计算偏差
 
   switch(Car_Direction)
-    {
-    case CarDirection_Head:
-      integral1 += error; // 积分更新
-      float derivative = error - prev_error1; // 微分
+  {
+  case CarDirection_Head:
+    integral1 += error; // 积分更新
+    float derivative = error - prev_error1; // 微分
 //	output = 30.0f * error + 0 * integral + 0.2f * derivative;
-      output = 1.5f * error + 0 * integral1 + 0 * derivative;
-      prev_error1 = error; // 更新前一个误差
+    output = 1.5f * error + 0 * integral1 + 0 * derivative;
+    prev_error1 = error; // 更新前一个误差
 //			ChassisSpeed_Set(output,150);//往前循迹
-      ChassisSpeed_Set1(0, 150, output);
-      break;
+    ChassisSpeed_Set1(0, 150, output);
+    break;
 
-    case CarDirection_Tail:
-      integral2 += error; // 积分更新
-      derivative = error - prev_error2; // 微分
+  case CarDirection_Tail:
+    integral2 += error; // 积分更新
+    derivative = error - prev_error2; // 微分
 //	output = 30.0f * error + 0 * integral + 0.2f * derivative;
-      output = 4.0f * error + 0 * integral2 + 0.3f * derivative;
-      prev_error2 = error; // 更新前一个误差
+    output = 4.0f * error + 0 * integral2 + 0.3f * derivative;
+    prev_error2 = error; // 更新前一个误差
 //			ChassisSpeed_Set(output,-150);//往后循迹
-      ChassisSpeed_Set1(0, -150, output);
-      break;
-    default:
-      break;
-    }
+    ChassisSpeed_Set1(0, -150, output);
+    break;
+  default:
+    break;
+  }
   zuo_count = 0;
   you_count = 0;
 }
@@ -1631,52 +1688,52 @@ uint16_t FindEnd_Head(void)
 {
   LineTrack_Scan(CarDirection_Head, &Line_Count);
   while(Line_Count >= 5)
-    {
-      My_mDelay(5);
-      LineTrack_Scan(CarDirection_Head, &Line_Count);
-      if(Line_Count >= 5)
-        return 1;
-      else return 0;
-    }
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Head, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
   return 0;
 }
 uint16_t FindEnd_Tail(void)
 {
   LineTrack_Scan(CarDirection_Tail, &Line_Count);
   while(Line_Count >= 5)
-    {
-      My_mDelay(5);
-      LineTrack_Scan(CarDirection_Tail, &Line_Count);
-      if(Line_Count >= 5)
-        return 1;
-      else return 0;
-    }
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Tail, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
   return 0;
 }
 uint16_t FindEnd_Left(void)
 {
   LineTrack_Scan(CarDirection_Left, &Line_Count);
   while(Line_Count >= 5)
-    {
-      My_mDelay(5);
-      LineTrack_Scan(CarDirection_Left, &Line_Count);
-      if(Line_Count >= 5)
-        return 1;
-      else return 0;
-    }
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Left, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
   return 0;
 }
 uint16_t FindEnd_Right(void)
 {
   LineTrack_Scan(CarDirection_Right, &Line_Count);
   while(Line_Count >= 5)
-    {
-      My_mDelay(5);
-      LineTrack_Scan(CarDirection_Right, &Line_Count);
-      if(Line_Count >= 5)
-        return 1;
-      else return 0;
-    }
+  {
+    My_mDelay(5);
+    LineTrack_Scan(CarDirection_Right, &Line_Count);
+    if(Line_Count >= 5)
+      return 1;
+    else return 0;
+  }
   return 0;
 }
 
@@ -1685,47 +1742,47 @@ uint16_t FindHead_Obstacle(void)
 {
   uint8_t time_cnt = 0;
   if(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance1)//防止超声波距离过长时，检测输出无效
+  {
+    time_cnt = 0;
+    while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance1 <= 200) //车头方向的超声波距离
     {
-      time_cnt = 0;
-      while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance1 <= 200) //车头方向的超声波距离
-        {
-          My_mDelay(5);  //此处更改探查到障碍物后的停车距离
-          time_cnt++;
-          if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
-            {
-              LineTracker_Struct.run_mode = Mode_Await;
-              time_cnt = 0;
-              return 1;//前方有障碍物，此时条件循迹条件达成
-            }
-        }
+      My_mDelay(5);  //此处更改探查到障碍物后的停车距离
+      time_cnt++;
+      if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
+      {
+        LineTracker_Struct.run_mode = Mode_Await;
+        time_cnt = 0;
+        return 1;//前方有障碍物，此时条件循迹条件达成
+      }
     }
+  }
   return 0;
 }
 uint16_t FindEnd_Obstacle(void)
 {
   uint8_t time_cnt = 0;
   if(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance3)//防止超声波距离过长时，检测输出无效
+  {
+    while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance3 <= 200) //车头方向的超声波距离
     {
-      while(UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance3 <= 200) //车头方向的超声波距离
-        {
-          My_mDelay(5);  //此处更改探查到障碍物后的停车距离
-          time_cnt++;
-          if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
-            {
-              LineTracker_Struct.run_mode = Mode_Await;
+      My_mDelay(5);  //此处更改探查到障碍物后的停车距离
+      time_cnt++;
+      if(time_cnt >= 5) //此处更改探查到障碍物后的停车距离
+      {
+        LineTracker_Struct.run_mode = Mode_Await;
 
-              return 1;//前方有障碍物，此时条件循迹条件达成
-            }
-        }
+        return 1;//前方有障碍物，此时条件循迹条件达成
+      }
     }
+  }
   return 0;
 }
 void CircleRecognitionModule_Start(RecognitionModule_s *hand)
 {
   if((hand->RecognitionModuleSte == RM_leisure)
-  || (hand->RecognitionModuleSte == RM_error)
-  || (hand->RecognitionModuleSte == RM_succeed))
-    {
-      hand->RecognitionModuleSte = RM_Circlestart;
-    }
+      || (hand->RecognitionModuleSte == RM_error)
+      || (hand->RecognitionModuleSte == RM_succeed))
+  {
+    hand->RecognitionModuleSte = RM_Circlestart;
+  }
 }
